@@ -1,0 +1,136 @@
+import { StyleSheet } from 'react-native';
+import { ThemeColors } from '../../../../shared/theme/types';
+import { fonts } from '../../../../shared/theme';
+
+const GetPOSScreenStyles = (colors: ThemeColors) => {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.MAIN_BACKGROUND,
+    },
+    topActions: {
+      flexDirection: 'row',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      gap: 10,
+    },
+    scanButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.PRIMARY,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      borderRadius: 12,
+      gap: 8,
+    },
+    scanButtonText: {
+      fontSize: fonts.FONT_SIZE_14,
+      fontWeight: '600',
+      color: colors.TEXT_WHITE,
+    },
+    searchInput: {
+      flex: 1,
+      backgroundColor: colors.INPUT_BACKGROUND,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.INPUT_TEXT,
+      borderWidth: 1,
+      borderColor: colors.INPUT_BORDER,
+    },
+    searchResults: {
+      backgroundColor: colors.CARD_BACKGROUND,
+      marginHorizontal: 16,
+      borderRadius: 12,
+      maxHeight: 200,
+      borderWidth: 1,
+      borderColor: colors.BORDER,
+    },
+    searchItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.DIVIDER,
+    },
+    searchItemName: {
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.TEXT_PRIMARY,
+      fontWeight: '500',
+      flex: 1,
+    },
+    searchItemPrice: {
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.PRIMARY,
+      fontWeight: '600',
+    },
+    cartHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+    },
+    cartTitle: {
+      fontSize: fonts.FONT_SIZE_18,
+      fontWeight: '700',
+      color: colors.TEXT_PRIMARY,
+    },
+    cartCount: {
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.TEXT_SECONDARY,
+    },
+    clearButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+    },
+    clearButtonText: {
+      fontSize: fonts.FONT_SIZE_12,
+      color: colors.DELETE_RED,
+      fontWeight: '600',
+    },
+    cartList: {
+      flex: 1,
+    },
+    emptyCart: {
+      fontSize: fonts.FONT_SIZE_16,
+      color: colors.TEXT_TERTIARY,
+      textAlign: 'center',
+      marginTop: 60,
+    },
+    footer: {
+      backgroundColor: colors.CART_FOOTER,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      borderTopWidth: 1,
+      borderTopColor: colors.BORDER,
+      shadowColor: colors.SHADOW,
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 8,
+    },
+    totalRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    totalLabel: {
+      fontSize: fonts.FONT_SIZE_18,
+      fontWeight: '600',
+      color: colors.TEXT_PRIMARY,
+    },
+    totalAmount: {
+      fontSize: fonts.FONT_SIZE_24,
+      fontWeight: '800',
+      color: colors.PRIMARY,
+    },
+  });
+};
+
+export default GetPOSScreenStyles;
