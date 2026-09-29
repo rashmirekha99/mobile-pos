@@ -9,9 +9,10 @@ interface BarcodeDisplayProps {
   value: string;
   type: 'QR' | 'EAN13' | 'CODE128';
   size?: number;
+  label?: string;
 }
 
-const BarcodeDisplay = ({ value, type, size = 150 }: BarcodeDisplayProps) => {
+const BarcodeDisplay = ({ value, type, size = 150, label }: BarcodeDisplayProps) => {
   const { colors } = useTheme();
   const styles = GetBarcodeDisplayStyles(colors);
 
@@ -30,7 +31,6 @@ const BarcodeDisplay = ({ value, type, size = 150 }: BarcodeDisplayProps) => {
             format="EAN13"
             width={2}
             height={80}
-            text={value}
           />
         );
       case 'CODE128':
@@ -40,7 +40,6 @@ const BarcodeDisplay = ({ value, type, size = 150 }: BarcodeDisplayProps) => {
             format="CODE128"
             width={1.5}
             height={80}
-            text={value}
           />
         );
       default:
@@ -51,7 +50,7 @@ const BarcodeDisplay = ({ value, type, size = 150 }: BarcodeDisplayProps) => {
   return (
     <View style={styles.container}>
       {renderBarcode()}
-      <Text style={styles.label}>{type}</Text>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
     </View>
   );
 };

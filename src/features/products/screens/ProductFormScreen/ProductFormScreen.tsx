@@ -171,7 +171,7 @@ const ProductFormScreen = () => {
             <ViewShot
               ref={barcodeRef}
               options={{ format: 'png', quality: 1.0 }}>
-              <BarcodeDisplay value={barcode} type={barcodeType} />
+              <BarcodeDisplay value={barcode} type={barcodeType} label={name || undefined} />
             </ViewShot>
             <TouchableOpacity
               style={styles.printButton}
