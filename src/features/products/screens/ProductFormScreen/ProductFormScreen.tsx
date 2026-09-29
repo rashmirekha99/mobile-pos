@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import RNFS from 'react-native-fs';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useNavigation,
@@ -66,13 +67,14 @@ const ProductFormScreen = () => {
     try {
       if (!barcodeRef.current?.capture) return;
       const uri = await barcodeRef.current.capture();
+      const base64 = await RNFS.readFile(uri, 'base64');
       await RNPrint.print({
         html: `
           <html>
             <body style="text-align:center; padding:20px;">
               <h2 style="margin-bottom:4px;">${name || 'Product'}</h2>
               <p style="margin-top:0; color:#666;">${barcode}</p>
-              <img src="file://${uri}" style="max-width:300px;" />
+              <img src="data:image/png;base64,${base64}" style="max-width:300px;" />
             </body>
           </html>
         `,
