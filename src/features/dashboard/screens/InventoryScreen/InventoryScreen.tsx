@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -7,6 +7,7 @@ import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 import AppBar from '../../../../shared/components/AppBar';
 import MainButton from '../../../../shared/components/MainButton';
+import SupplierFilterDropdown from '../../../../shared/components/SupplierFilterDropdown';
 import useTheme from '../../../../shared/theme/useTheme';
 import GetInventoryScreenStyles from './InventoryScreenStyles';
 import { getDatabase } from '../../../../shared/db/database';
@@ -14,6 +15,8 @@ import {
   getInventorySummary,
   InventorySummary,
 } from '../../services/dashboardService';
+import { Supplier } from '../../../../shared/types';
+import { getAllSuppliers } from '../../../suppliers/services/supplierService';
 import { STORE_NAME } from '../../../../configs/Constants';
 import { formatDate, getTodayDateString } from '../../../../shared/utils/format';
 
@@ -26,14 +29,20 @@ const InventoryScreen = () => {
     totalSoldQty: 0,
     items: [],
   });
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [filterSupplierId, setFilterSupplierId] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       const load = async () => {
         try {
           const db = await getDatabase();
-          const data = await getInventorySummary(db);
+          const [data, suppData] = await Promise.all([
+            getInventorySummary(db),
+            getAllSuppliers(db),
+          ]);
           setSummary(data);
+          setSuppliers(suppData);
         } catch (error) {
           console.error('Failed to load inventory:', error);
         }
@@ -42,8 +51,13 @@ const InventoryScreen = () => {
     }, []),
   );
 
+  const filteredItems = useMemo(() => {
+    if (filterSupplierId === null) return summary.items;
+    return summary.items.filter((item) => item.supplier_id === filterSupplierId);
+  }, [summary.items, filterSupplierId]);
+
   const buildHtml = () => {
-    const rows = summary.items
+    const rows = filteredItems
       .map(
         (item) => `
         <tr>
@@ -138,7 +152,13 @@ const InventoryScreen = () => {
 
         <Text style={styles.sectionTitle}>Product-wise Stock</Text>
 
-        {summary.items.length > 0 ? (
+        <SupplierFilterDropdown
+          suppliers={suppliers}
+          selectedId={filterSupplierId}
+          onSelect={setFilterSupplierId}
+        />
+
+        {filteredItems.length > 0 ? (
           <View style={styles.tableContainer}>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableHeaderText, styles.colName]}>
@@ -151,7 +171,7 @@ const InventoryScreen = () => {
                 Sold
               </Text>
             </View>
-            {summary.items.map((item, index) => (
+            {filteredItems.map((item, index) => (
               <View
                 key={item.id}
                 style={[

@@ -14,60 +14,82 @@ const GetDashboardScreenStyles = (colors: ThemeColors) => {
       backgroundColor: colors.MAIN_BACKGROUND,
     },
     scrollContent: {
-      padding: 16,
+      padding: SCREEN_PADDING,
       paddingBottom: 40,
     },
-    greeting: {
-      fontSize: fonts.FONT_SIZE_14,
-      color: colors.TEXT_SECONDARY,
-      marginBottom: 4,
+
+    // Header
+    headerSection: {
+      marginBottom: 20,
     },
-    title: {
+    greeting: {
       fontSize: fonts.FONT_SIZE_24,
       fontWeight: '800',
       color: colors.TEXT_PRIMARY,
-      marginBottom: 20,
+      marginBottom: 2,
     },
-    summaryContainer: {
-      backgroundColor: colors.DASHBOARD_SUMMARY_BG,
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 24,
-      shadowColor: colors.SHADOW,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 6,
-      elevation: 3,
-    },
-    summaryTitle: {
+    dateText: {
       fontSize: fonts.FONT_SIZE_14,
-      fontWeight: '600',
-      color: colors.TEXT_SECONDARY,
-      marginBottom: 12,
+      color: colors.TEXT_TERTIARY,
     },
+
+    // Summary cards
     summaryRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      marginBottom: 28,
     },
-    summaryItem: {
+    summaryCard: {
+      flex: 1,
+      backgroundColor: colors.CARD_BACKGROUND,
+      borderRadius: 16,
+      padding: 16,
       alignItems: 'center',
+      shadowColor: colors.SHADOW,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    summaryCardRevenue: {
+      marginRight: CARD_GAP / 2,
+    },
+    summaryCardSales: {
+      marginLeft: CARD_GAP / 2,
+    },
+    summaryIconCircle: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    summaryEmoji: {
+      fontSize: fonts.FONT_SIZE_18,
+      fontWeight: '800',
+      color: colors.TEXT_PRIMARY,
     },
     summaryValue: {
       fontSize: fonts.FONT_SIZE_24,
       fontWeight: '800',
-      color: colors.PRIMARY,
+      marginBottom: 2,
     },
     summaryLabel: {
       fontSize: fonts.FONT_SIZE_12,
       color: colors.TEXT_TERTIARY,
-      marginTop: 4,
+      fontWeight: '500',
     },
+
+    // Section titles
     sectionTitle: {
       fontSize: fonts.FONT_SIZE_18,
       fontWeight: '700',
       color: colors.TEXT_PRIMARY,
-      marginBottom: 12,
+      marginBottom: 14,
     },
+
+    // Action grid
     gridRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -76,41 +98,104 @@ const GetDashboardScreenStyles = (colors: ThemeColors) => {
     },
     gridCard: {
       width: CARD_SIZE,
-      height: CARD_SIZE,
-      borderRadius: 16,
+      height: CARD_SIZE * 0.85,
+      borderRadius: 20,
+      overflow: 'hidden',
+      shadowColor: colors.SHADOW,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+    gridCardOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: '#00000010',
+      borderRadius: 20,
+    },
+    gridCardContent: {
+      flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      shadowColor: colors.SHADOW,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 6,
-      elevation: 4,
+      padding: 12,
+    },
+    gridCardTextWrap: {
+      alignItems: 'center',
+      marginTop: 10,
     },
     gridTextIcon: {
-      fontSize: 42,
+      fontSize: 38,
     },
     gridTitle: {
-      marginTop: 12,
       fontSize: fonts.FONT_SIZE_16,
       fontWeight: '700',
       color: colors.TEXT_WHITE,
       textAlign: 'center',
     },
+    gridSubtitle: {
+      fontSize: fonts.FONT_SIZE_12,
+      fontWeight: '400',
+      color: 'rgba(255,255,255,0.7)',
+      textAlign: 'center',
+      marginTop: 2,
+    },
+
+    // Low stock section
+    lowStockSection: {
+      marginTop: 28,
+    },
+    lowStockHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    lowStockHeaderText: {
+      fontSize: fonts.FONT_SIZE_18,
+      fontWeight: '700',
+      color: colors.TEXT_PRIMARY,
+    },
+    lowStockBadge: {
+      backgroundColor: colors.ERROR,
+      borderRadius: 10,
+      minWidth: 22,
+      height: 22,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: 8,
+      paddingHorizontal: 6,
+    },
+    lowStockBadgeText: {
+      fontSize: fonts.FONT_SIZE_12,
+      fontWeight: '700',
+      color: colors.TEXT_WHITE,
+    },
     lowStockContainer: {
       backgroundColor: colors.CARD_BACKGROUND,
-      borderRadius: 12,
+      borderRadius: 16,
       overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: colors.WARNING,
+      shadowColor: colors.SHADOW,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+      elevation: 2,
     },
     lowStockRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 14,
       borderBottomWidth: 1,
       borderBottomColor: colors.DIVIDER,
+    },
+    lowStockRowLast: {
+      borderBottomWidth: 0,
+    },
+    lowStockDot: {
+      marginRight: 12,
+    },
+    lowStockDotInner: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
     },
     lowStockName: {
       flex: 1,
@@ -118,12 +203,17 @@ const GetDashboardScreenStyles = (colors: ThemeColors) => {
       fontWeight: '500',
       color: colors.TEXT_PRIMARY,
     },
+    lowStockQtyBadge: {
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      minWidth: 40,
+      alignItems: 'center',
+    },
     lowStockQty: {
-      fontSize: fonts.FONT_SIZE_14,
+      fontSize: fonts.FONT_SIZE_12,
       fontWeight: '700',
       color: colors.WARNING,
-      minWidth: 40,
-      textAlign: 'right',
     },
     lowStockOut: {
       color: colors.ERROR,

@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
-import { SalesSummary } from '../../../shared/types';
+import { Sale, SalesSummary } from '../../../shared/types';
 import { getDatabase } from '../../../shared/db/database';
 import { getDailySummary } from '../services/reportService';
+import { getSalesByDate } from '../../sales/services/salesService';
 import { getTodayDateString } from '../../../shared/utils/format';
 
 const useDailyReport = () => {
@@ -9,8 +10,10 @@ const useDailyReport = () => {
   const [summary, setSummary] = useState<SalesSummary>({
     totalSales: 0,
     totalTransactions: 0,
+    totalProfit: 0,
     items: [],
   });
+  const [sales, setSales] = useState<Array<Sale & { item_count: number }>>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadReport = useCallback(async (reportDate?: string) => {
@@ -18,8 +21,12 @@ const useDailyReport = () => {
     setIsLoading(true);
     try {
       const db = await getDatabase();
-      const data = await getDailySummary(db, targetDate);
+      const [data, salesData] = await Promise.all([
+        getDailySummary(db, targetDate),
+        getSalesByDate(db, targetDate),
+      ]);
       setSummary(data);
+      setSales(salesData);
     } catch (error) {
       console.error('Failed to load report:', error);
     } finally {
@@ -31,6 +38,7 @@ const useDailyReport = () => {
     date,
     setDate,
     summary,
+    sales,
     isLoading,
     loadReport,
   };

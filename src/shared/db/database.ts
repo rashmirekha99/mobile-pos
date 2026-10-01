@@ -62,10 +62,42 @@ export const getDatabase = async (): Promise<SQLiteDatabase> => {
     await dbInstance.executeSql(statement + ';');
   }
 
+  await dbInstance.executeSql(
+    'CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);',
+  );
+
   // Migration: add stock column if missing
   try {
     await dbInstance.executeSql(
       "ALTER TABLE products ADD COLUMN stock INTEGER NOT NULL DEFAULT 0",
+    );
+  } catch (_) {
+    // Column already exists
+  }
+
+  // Migration: suppliers table
+  await dbInstance.executeSql(`
+    CREATE TABLE IF NOT EXISTS suppliers (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      name        TEXT    NOT NULL,
+      phone       TEXT,
+      email       TEXT,
+      address     TEXT,
+      created_at  TEXT    DEFAULT (datetime('now','localtime'))
+    );
+  `);
+
+  // Migration: add buying_price and supplier_id to products
+  try {
+    await dbInstance.executeSql(
+      "ALTER TABLE products ADD COLUMN buying_price REAL DEFAULT 0",
+    );
+  } catch (_) {
+    // Column already exists
+  }
+  try {
+    await dbInstance.executeSql(
+      "ALTER TABLE products ADD COLUMN supplier_id INTEGER REFERENCES suppliers(id)",
     );
   } catch (_) {
     // Column already exists

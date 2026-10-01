@@ -13,11 +13,33 @@ const GetBarcodeDisplayStyles = (colors: ThemeColors) => {
       borderWidth: 1,
       borderColor: colors.BORDER,
     },
-    label: {
-      marginTop: 8,
+    barcodeValue: {
+      marginTop: 6,
       fontSize: fonts.FONT_SIZE_12,
-      color: colors.TEXT_SECONDARY,
+      color: '#000000',
       textAlign: 'center',
+      fontWeight: '500',
+    },
+    productName: {
+      marginTop: 4,
+      fontSize: fonts.FONT_SIZE_14,
+      color: '#000000',
+      textAlign: 'center',
+      fontWeight: '700',
+    },
+    priceText: {
+      marginTop: 2,
+      fontSize: fonts.FONT_SIZE_14,
+      color: '#000000',
+      textAlign: 'center',
+      fontWeight: '600',
+    },
+    companyName: {
+      marginTop: 4,
+      fontSize: fonts.FONT_SIZE_10,
+      color: '#333333',
+      textAlign: 'center',
+      fontWeight: '500',
     },
   });
 };

@@ -6,4 +6,8 @@ export type RootStackParamList = {
   Receipt: { saleId: number };
   DailyReport: undefined;
   Inventory: undefined;
+  PrinterSettings: undefined;
+  SupplierList: undefined;
+  SupplierForm: { supplierId?: number } | undefined;
+  GeneralSettings: undefined;
 };

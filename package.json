@@ -17,6 +17,7 @@
     "react": "19.2.3",
     "react-native": "0.87.1",
     "react-native-fs": "^2.20.0",
+    "react-native-ping": "^1.2.8",
     "react-native-print": "^0.11.0",
     "react-native-qrcode-svg": "^6.3.2",
     "react-native-safe-area-context": "^5.5.2",
@@ -25,6 +26,7 @@
     "react-native-sqlite-storage": "^6.0.1",
     "react-native-svg": "^15.11.1",
     "react-native-svg-transformer": "^1.5.3",
+    "react-native-thermal-receipt-printer-image-qr": "^0.18.0",
     "react-native-view-shot": "^4.0.2",
     "react-native-vision-camera": "^4.6.4",
     "zustand": "^5.0.3"

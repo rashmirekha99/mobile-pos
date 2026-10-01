@@ -13,10 +13,12 @@ import { generateRandomBarcode } from '../../../shared/utils/barcode';
 const useProductForm = (productId?: number) => {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [buyingPrice, setBuyingPrice] = useState('');
+  const [supplierId, setSupplierId] = useState<number | null>(null);
   const [sku, setSku] = useState('');
   const [barcode, setBarcode] = useState('');
   const [barcodeType, setBarcodeType] = useState<BarcodeType>('CODE128');
-  const [stock, setStock] = useState('0');
+  const [stock, setStock] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -33,6 +35,8 @@ const useProductForm = (productId?: number) => {
       if (product) {
         setName(product.name);
         setPrice(product.price.toString());
+        setBuyingPrice(product.buying_price ? product.buying_price.toString() : '');
+        setSupplierId(product.supplier_id);
         setSku(product.sku || '');
         setBarcode(product.barcode || '');
         setBarcodeType(product.barcode_type);
@@ -71,6 +75,8 @@ const useProductForm = (productId?: number) => {
       const productData: Omit<Product, 'id' | 'created_at'> = {
         name: name.trim(),
         price: parseFloat(price),
+        buying_price: parseFloat(buyingPrice) || 0,
+        supplier_id: supplierId,
         sku: sku.trim() || null,
         barcode: barcode.trim() || null,
         barcode_type: barcodeType,
@@ -103,6 +109,10 @@ const useProductForm = (productId?: number) => {
     setName,
     price,
     setPrice,
+    buyingPrice,
+    setBuyingPrice,
+    supplierId,
+    setSupplierId,
     sku,
     setSku,
     barcode,

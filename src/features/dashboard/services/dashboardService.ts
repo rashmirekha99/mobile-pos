@@ -10,6 +10,7 @@ export interface InventoryItem {
   name: string;
   stock: number;
   total_sold: number;
+  supplier_id: number | null;
 }
 
 export interface InventorySummary {
@@ -36,11 +37,11 @@ export const getInventorySummary = async (
   db: SQLiteDatabase,
 ): Promise<InventorySummary> => {
   const [results] = await db.executeSql(
-    `SELECT p.id, p.name, p.stock,
+    `SELECT p.id, p.name, p.stock, p.supplier_id,
             COALESCE(SUM(si.quantity), 0) as total_sold
      FROM products p
      LEFT JOIN sale_items si ON p.id = si.product_id
-     GROUP BY p.id, p.name, p.stock
+     GROUP BY p.id, p.name, p.stock, p.supplier_id
      ORDER BY p.name ASC`,
   );
 

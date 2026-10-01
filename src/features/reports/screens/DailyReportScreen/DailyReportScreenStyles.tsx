@@ -44,7 +44,7 @@ const GetDailyReportScreenStyles = (colors: ThemeColors) => {
       elevation: 3,
     },
     summaryValue: {
-      fontSize: fonts.FONT_SIZE_24,
+      fontSize: fonts.FONT_SIZE_18,
       fontWeight: '800',
       color: colors.PRIMARY,
     },
@@ -69,11 +69,12 @@ const GetDailyReportScreenStyles = (colors: ThemeColors) => {
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 2,
+      minWidth: '100%',
     },
     tableHeader: {
       flexDirection: 'row',
       backgroundColor: colors.REPORT_HEADER,
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       paddingVertical: 12,
     },
     tableHeaderText: {
@@ -83,7 +84,7 @@ const GetDailyReportScreenStyles = (colors: ThemeColors) => {
     },
     tableRow: {
       flexDirection: 'row',
-      paddingHorizontal: 16,
+      paddingHorizontal: 12,
       paddingVertical: 12,
       borderBottomWidth: 1,
       borderBottomColor: colors.DIVIDER,
@@ -92,23 +93,36 @@ const GetDailyReportScreenStyles = (colors: ThemeColors) => {
       backgroundColor: colors.REPORT_ROW_ALT,
     },
     tableCell: {
-      fontSize: fonts.FONT_SIZE_14,
+      fontSize: fonts.FONT_SIZE_12,
       color: colors.TEXT_PRIMARY,
     },
     tableCellBold: {
-      fontSize: fonts.FONT_SIZE_14,
+      fontSize: fonts.FONT_SIZE_12,
       fontWeight: '600',
       color: colors.TEXT_PRIMARY,
     },
     colProduct: {
-      flex: 2,
+      width: 120,
+      paddingRight: 8,
+    },
+    colSupplier: {
+      width: 90,
+      paddingRight: 8,
     },
     colQty: {
-      flex: 1,
+      width: 40,
       textAlign: 'center',
     },
+    colCost: {
+      width: 80,
+      textAlign: 'right',
+    },
     colRevenue: {
-      flex: 1.5,
+      width: 80,
+      textAlign: 'right',
+    },
+    colProfit: {
+      width: 80,
       textAlign: 'right',
     },
     emptyReport: {
@@ -116,6 +130,54 @@ const GetDailyReportScreenStyles = (colors: ThemeColors) => {
       color: colors.TEXT_TERTIARY,
       textAlign: 'center',
       marginTop: 40,
+    },
+    transactionsContainer: {
+      backgroundColor: colors.CARD_BACKGROUND,
+      borderRadius: 12,
+      overflow: 'hidden',
+      shadowColor: colors.SHADOW,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    transactionRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.DIVIDER,
+    },
+    transactionRowLast: {
+      borderBottomWidth: 0,
+    },
+    transactionInfo: {
+      flex: 1,
+    },
+    transactionId: {
+      fontSize: fonts.FONT_SIZE_14,
+      fontWeight: '700',
+      color: colors.TEXT_PRIMARY,
+    },
+    transactionTime: {
+      fontSize: fonts.FONT_SIZE_12,
+      color: colors.TEXT_TERTIARY,
+      marginTop: 2,
+    },
+    transactionRight: {
+      alignItems: 'flex-end',
+    },
+    transactionAmount: {
+      fontSize: fonts.FONT_SIZE_14,
+      fontWeight: '700',
+      color: colors.PRIMARY,
+    },
+    transactionItems: {
+      fontSize: fonts.FONT_SIZE_12,
+      color: colors.TEXT_SECONDARY,
+      marginTop: 2,
     },
     actionRow: {
       flexDirection: 'row',

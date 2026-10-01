@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
+  Modal,
+  FlatList,
+  KeyboardAvoidingView,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useNavigation,
   useRoute,
+  useFocusEffect,
   RouteProp,
   NavigationProp,
 } from '@react-navigation/native';
@@ -25,6 +30,18 @@ import GetProductFormScreenStyles from './ProductFormScreenStyles';
 import BarcodeDisplay from '../../components/BarcodeDisplay';
 import useProductForm from '../../hooks/useProductForm';
 import { BarcodeType } from '../../types';
+import { usePrinterStore } from '../../../../shared/store/printerStore';
+import {
+  printImageBase64,
+  isConnected as isPrinterConnected,
+} from '../../../../shared/services/bluetoothPrinterService';
+import { Supplier } from '../../../../shared/types';
+import { getDatabase } from '../../../../shared/db/database';
+import { getAllSuppliers } from '../../../suppliers/services/supplierService';
+import { useSettingsStore } from '../../../../shared/store/settingsStore';
+import { getSetting } from '../../../../shared/services/settingsService';
+import { STORE_NAME } from '../../../../configs/Constants';
+import { formatCurrency } from '../../../../shared/utils/format';
 
 const BARCODE_TYPES: BarcodeType[] = ['QR', 'EAN13', 'CODE128'];
 
@@ -42,6 +59,10 @@ const ProductFormScreen = () => {
     setName,
     price,
     setPrice,
+    buyingPrice,
+    setBuyingPrice,
+    supplierId,
+    setSupplierId,
     sku,
     setSku,
     barcode,
@@ -56,6 +77,48 @@ const ProductFormScreen = () => {
     handleSave,
   } = useProductForm(productId);
 
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [showSupplierPicker, setShowSupplierPicker] = useState(false);
+  const { profitMargin, setProfitMargin } = useSettingsStore();
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadSuppliers = async () => {
+        try {
+          const db = await getDatabase();
+          const data = await getAllSuppliers(db);
+          setSuppliers(data);
+        } catch {}
+      };
+      const loadMargin = async () => {
+        try {
+          const db = await getDatabase();
+          const saved = await getSetting(db, 'profit_margin');
+          if (saved) {
+            const val = parseFloat(saved);
+            if (!isNaN(val) && val >= 0) {
+              setProfitMargin(val);
+            }
+          }
+        } catch {}
+      };
+      loadSuppliers();
+      loadMargin();
+    }, []),
+  );
+
+  const applyMargin = () => {
+    const bp = parseFloat(buyingPrice);
+    if (isNaN(bp) || bp <= 0) {
+      Alert.alert('Margin', 'Please enter a valid buying price first');
+      return;
+    }
+    const sellingPrice = bp * (1 + profitMargin / 100);
+    setPrice(sellingPrice.toFixed(2));
+  };
+
+  const selectedSupplier = suppliers.find((s) => s.id === supplierId);
+
   const onSave = async () => {
     const success = await handleSave();
     if (success) {
@@ -63,25 +126,98 @@ const ProductFormScreen = () => {
     }
   };
 
-  const handlePrint = async () => {
+  const thermalConnected = usePrinterStore((s) => s.isConnected);
+
+  const captureBarcode = async (): Promise<string | null> => {
+    try {
+      if (!barcodeRef.current?.capture) return null;
+      const uri = await barcodeRef.current.capture();
+      return await RNFS.readFile(uri, 'base64');
+    } catch {
+      return null;
+    }
+  };
+
+  const handleNormalPrint = async (base64: string) => {
+    const parsedPrice = parseFloat(price);
+    await RNPrint.print({
+      html: `
+        <html>
+          <body style="text-align:center; padding:20px; font-family:sans-serif;">
+            <img src="data:image/png;base64,${base64}" style="max-width:300px;" />
+            <p style="margin:6px 0 2px; font-size:14px; color:#333;">${barcode}</p>
+            <h2 style="margin:4px 0;">${name || 'Product'}</h2>
+            ${!isNaN(parsedPrice) && parsedPrice > 0 ? `<p style="margin:2px 0; font-size:16px; font-weight:bold;">${formatCurrency(parsedPrice)}</p>` : ''}
+            <p style="margin:4px 0; font-size:12px; color:#666;">${STORE_NAME}</p>
+          </body>
+        </html>
+      `,
+    });
+  };
+
+  const handleThermalPrint = async (base64: string) => {
+    await printImageBase64(base64);
+  };
+
+  const handleSaveImage = async () => {
     try {
       if (!barcodeRef.current?.capture) return;
       const uri = await barcodeRef.current.capture();
-      const base64 = await RNFS.readFile(uri, 'base64');
-      await RNPrint.print({
-        html: `
-          <html>
-            <body style="text-align:center; padding:20px;">
-              <h2 style="margin-bottom:4px;">${name || 'Product'}</h2>
-              <p style="margin-top:0; color:#666;">${barcode}</p>
-              <img src="data:image/png;base64,${base64}" style="max-width:300px;" />
-            </body>
-          </html>
-        `,
-      });
-    } catch (error: any) {
-      if (error?.message !== 'User cancelled') {
-        Alert.alert('Print Error', 'Failed to print barcode');
+      const timestamp = Date.now();
+      const safeName = (name || 'product').replace(/[^a-zA-Z0-9]/g, '_');
+      const fileName = `barcode_${safeName}_${timestamp}.png`;
+      const destDir =
+        Platform.OS === 'android'
+          ? RNFS.PicturesDirectoryPath
+          : RNFS.DocumentDirectoryPath;
+      const destPath = `${destDir}/${fileName}`;
+      await RNFS.copyFile(uri, destPath);
+      if (Platform.OS === 'android') {
+        await RNFS.scanFile(destPath);
+      }
+      Alert.alert('Saved', `Barcode image saved to:\n${destPath}`);
+    } catch {
+      Alert.alert('Error', 'Failed to save barcode image');
+    }
+  };
+
+  const handlePrint = async () => {
+    const base64 = await captureBarcode();
+    if (!base64) return;
+
+    if (thermalConnected && isPrinterConnected()) {
+      Alert.alert('Print Method', 'Choose how to print the barcode:', [
+        {
+          text: 'Thermal Printer',
+          onPress: async () => {
+            try {
+              await handleThermalPrint(base64);
+            } catch {
+              Alert.alert('Print Error', 'Failed to print to thermal printer');
+            }
+          },
+        },
+        {
+          text: 'Normal Print',
+          onPress: async () => {
+            try {
+              await handleNormalPrint(base64);
+            } catch (error: any) {
+              if (error?.message !== 'User cancelled') {
+                Alert.alert('Print Error', 'Failed to print barcode');
+              }
+            }
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    } else {
+      try {
+        await handleNormalPrint(base64);
+      } catch (error: any) {
+        if (error?.message !== 'User cancelled') {
+          Alert.alert('Print Error', 'Failed to print barcode');
+        }
       }
     }
   };
@@ -89,7 +225,13 @@ const ProductFormScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <AppBar title={isEditing ? 'Edit Product' : 'Add Product'} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled">
         <Text style={styles.label}>Product Name *</Text>
         <TextInput
           style={styles.input}
@@ -99,7 +241,22 @@ const ProductFormScreen = () => {
           onChangeText={setName}
         />
 
-        <Text style={styles.label}>Price *</Text>
+        <Text style={styles.label}>Buying Price</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="0.00"
+          placeholderTextColor={colors.INPUT_PLACEHOLDER}
+          value={buyingPrice}
+          onChangeText={setBuyingPrice}
+          keyboardType="decimal-pad"
+        />
+
+        <View style={styles.labelRow}>
+          <Text style={[styles.label, {marginTop: 0, marginBottom: 0}]}>Selling Price *</Text>
+          <TouchableOpacity style={styles.marginButton} onPress={applyMargin}>
+            <Text style={styles.marginButtonText}>+{profitMargin}%</Text>
+          </TouchableOpacity>
+        </View>
         <TextInput
           style={styles.input}
           placeholder="0.00"
@@ -108,6 +265,66 @@ const ProductFormScreen = () => {
           onChangeText={setPrice}
           keyboardType="decimal-pad"
         />
+
+        <Text style={styles.label}>Supplier</Text>
+        <TouchableOpacity
+          style={styles.dropdownButton}
+          onPress={() => setShowSupplierPicker(true)}>
+          <Text
+            style={[
+              styles.dropdownButtonText,
+              !selectedSupplier && styles.dropdownPlaceholder,
+            ]}>
+            {selectedSupplier ? selectedSupplier.name : 'Select supplier (optional)'}
+          </Text>
+          <Text style={styles.dropdownArrow}>▼</Text>
+        </TouchableOpacity>
+
+        <Modal
+          visible={showSupplierPicker}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowSupplierPicker(false)}>
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowSupplierPicker(false)}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Select Supplier</Text>
+              <TouchableOpacity
+                style={styles.modalOption}
+                onPress={() => {
+                  setSupplierId(null);
+                  setShowSupplierPicker(false);
+                }}>
+                <Text style={styles.modalOptionText}>None</Text>
+              </TouchableOpacity>
+              <FlatList
+                data={suppliers}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.modalOption,
+                      supplierId === item.id && styles.modalOptionActive,
+                    ]}
+                    onPress={() => {
+                      setSupplierId(item.id);
+                      setShowSupplierPicker(false);
+                    }}>
+                    <Text
+                      style={[
+                        styles.modalOptionText,
+                        supplierId === item.id && styles.modalOptionTextActive,
+                      ]}>
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </TouchableOpacity>
+        </Modal>
 
         <Text style={styles.label}>SKU</Text>
         <TextInput
@@ -171,13 +388,20 @@ const ProductFormScreen = () => {
             <ViewShot
               ref={barcodeRef}
               options={{ format: 'png', quality: 1.0 }}>
-              <BarcodeDisplay value={barcode} type={barcodeType} label={name || undefined} />
+              <BarcodeDisplay value={barcode} type={barcodeType} label={name || undefined} price={price} />
             </ViewShot>
-            <TouchableOpacity
-              style={styles.printButton}
-              onPress={handlePrint}>
-              <Text style={styles.printButtonText}>Print Barcode</Text>
-            </TouchableOpacity>
+            <View style={styles.barcodeActionsRow}>
+              <TouchableOpacity
+                style={styles.printButton}
+                onPress={handlePrint}>
+                <Text style={styles.printButtonText}>Print Barcode</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.saveImageButton}
+                onPress={handleSaveImage}>
+                <Text style={styles.saveImageButtonText}>Save Image</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -189,6 +413,7 @@ const ProductFormScreen = () => {
           />
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
