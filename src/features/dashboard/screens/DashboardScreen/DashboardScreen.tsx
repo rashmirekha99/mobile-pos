@@ -80,28 +80,28 @@ const DashboardScreen = () => {
     {
       title: 'Inventory',
       subtitle: 'Stock levels',
-      textIcon: '\u{1F4E6}',
-      color: colors.ACCENT,
+      textIcon: '📦',
+      color: '#A27CDE',
       screen: 'Inventory',
     },
     {
       title: 'Suppliers',
       subtitle: 'Manage suppliers',
-      textIcon: '\u{1F465}',
-      color: colors.PRIMARY_DARK,
+      textIcon: '👥',
+      color:'#DECC7C',
       screen: 'SupplierList',
     },
     {
       title: 'Printer',
       subtitle: 'Bluetooth setup',
-      textIcon: '\u{1F5A8}',
-      color: colors.SECONDARY,
+      textIcon: '🖨',
+      color: '#DE7C7C',
       screen: 'PrinterSettings',
     },
     {
       title: 'Settings',
       subtitle: 'General config',
-      textIcon: '\u{2699}',
+      textIcon: '⚙',
       color: colors.TEXT_SECONDARY,
       screen: 'GeneralSettings',
     },
@@ -154,7 +154,7 @@ const DashboardScreen = () => {
               <View style={styles.gridCardOverlay} />
               <View style={styles.gridCardContent}>
                 {card.Icon ? (
-                  <card.Icon width={44} height={44} />
+                  <card.Icon width={32} height={32} />
                 ) : (
                   <Text style={styles.gridTextIcon}>{card.textIcon}</Text>
                 )}

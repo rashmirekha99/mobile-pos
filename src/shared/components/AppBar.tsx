@@ -6,12 +6,18 @@ import Svg, { Path } from 'react-native-svg';
 import useTheme from '../theme/useTheme';
 import GetAppBarStyles from './AppBarStyles';
 
+interface RightAction {
+  icon: React.ReactNode;
+  onPress: () => void;
+}
+
 interface AppBarProps {
   title: string;
   showBackButton?: boolean;
   onBackPress?: () => void;
   rightIcon?: React.ReactNode;
   onRightPress?: () => void;
+  rightActions?: RightAction[];
 }
 
 const AppBar = ({
@@ -20,6 +26,7 @@ const AppBar = ({
   onBackPress,
   rightIcon,
   onRightPress,
+  rightActions,
 }: AppBarProps) => {
   const navigation = useNavigation();
   const { colors } = useTheme();
@@ -59,7 +66,18 @@ const AppBar = ({
           <View style={styles.titleContainer}>
             <Text style={styles.titleText}>{title}</Text>
           </View>
-          {rightIcon ? (
+          {rightActions && rightActions.length > 0 ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              {rightActions.map((action, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={styles.rightButton}
+                  onPress={action.onPress}>
+                  {action.icon}
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : rightIcon ? (
             <TouchableOpacity
               style={styles.rightButton}
               onPress={onRightPress}>

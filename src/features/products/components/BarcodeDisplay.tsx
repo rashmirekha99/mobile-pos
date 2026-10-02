@@ -32,8 +32,8 @@ const BarcodeDisplay = ({ value, type, size = 150, label, price }: BarcodeDispla
           <Barcode
             value={value}
             format="EAN13"
-            width={2}
-            height={80}
+            width={3}
+            height={100}
           />
         );
       case 'CODE128':
@@ -41,8 +41,8 @@ const BarcodeDisplay = ({ value, type, size = 150, label, price }: BarcodeDispla
           <Barcode
             value={value}
             format="CODE128"
-            width={1.5}
-            height={80}
+            width={2.5}
+            height={100}
           />
         );
       default:

@@ -103,6 +103,15 @@ export const getDatabase = async (): Promise<SQLiteDatabase> => {
     // Column already exists
   }
 
+  // Migration: add discount column to sales
+  try {
+    await dbInstance.executeSql(
+      "ALTER TABLE sales ADD COLUMN discount REAL NOT NULL DEFAULT 0",
+    );
+  } catch (_) {
+    // Column already exists
+  }
+
   return dbInstance;
 };
 

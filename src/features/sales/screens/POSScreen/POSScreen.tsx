@@ -42,6 +42,7 @@ const POSScreen = () => {
   const [scannerVisible, setScannerVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [discountInput, setDiscountInput] = useState('');
 
   const handleSearch = useCallback(
     async (query: string) => {
@@ -71,28 +72,32 @@ const POSScreen = () => {
     await handleBarcodeScan(barcode);
   };
 
+  const discount = parseFloat(discountInput) || 0;
+  const finalTotal = Math.max(total - discount, 0);
+
   const onCheckout = () => {
     if (items.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to cart first');
       return;
     }
 
-    Alert.alert(
-      'Confirm Checkout',
-      `Total: ${formatCurrency(total)}\n\nProceed with checkout?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm',
-          onPress: async () => {
-            const saleId = await handleCheckout();
-            if (saleId) {
-              navigation.navigate('Receipt', { saleId });
-            }
-          },
+    const msg = discount > 0
+      ? `Subtotal: ${formatCurrency(total)}\nDiscount: -${formatCurrency(discount)}\nTotal: ${formatCurrency(finalTotal)}\n\nProceed with checkout?`
+      : `Total: ${formatCurrency(total)}\n\nProceed with checkout?`;
+
+    Alert.alert('Confirm Checkout', msg, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Confirm',
+        onPress: async () => {
+          const saleId = await handleCheckout(discount);
+          if (saleId) {
+            setDiscountInput('');
+            navigation.navigate('Receipt', { saleId });
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -173,9 +178,26 @@ const POSScreen = () => {
       />
 
       <View style={styles.footer}>
+        {discount > 0 && (
+          <View style={styles.subtotalRow}>
+            <Text style={styles.subtotalLabel}>Subtotal</Text>
+            <Text style={styles.subtotalAmount}>{formatCurrency(total)}</Text>
+          </View>
+        )}
+        <View style={styles.discountRow}>
+          <Text style={styles.discountLabel}>Discount</Text>
+          <TextInput
+            style={styles.discountInput}
+            placeholder="0.00"
+            placeholderTextColor={colors.INPUT_PLACEHOLDER}
+            value={discountInput}
+            onChangeText={setDiscountInput}
+            keyboardType="decimal-pad"
+          />
+        </View>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalAmount}>{formatCurrency(total)}</Text>
+          <Text style={styles.totalAmount}>{formatCurrency(finalTotal)}</Text>
         </View>
         <MainButton
           title="Checkout"

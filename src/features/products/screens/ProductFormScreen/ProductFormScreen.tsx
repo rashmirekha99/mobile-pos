@@ -10,6 +10,7 @@ import {
   Modal,
   FlatList,
   KeyboardAvoidingView,
+  BackHandler,
 } from 'react-native';
 import RNFS from 'react-native-fs';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -81,6 +82,24 @@ const ProductFormScreen = () => {
   const [showSupplierPicker, setShowSupplierPicker] = useState(false);
   const { profitMargin, setProfitMargin } = useSettingsStore();
 
+  const confirmGoBack = useCallback(() => {
+    Alert.alert('Go Back', 'Are you sure you want to go back? Unsaved changes will be lost.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Yes', onPress: () => navigation.goBack() },
+    ]);
+  }, [navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        confirmGoBack();
+        return true;
+      };
+      const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => sub.remove();
+    }, [confirmGoBack]),
+  );
+
   useFocusEffect(
     useCallback(() => {
       const loadSuppliers = async () => {
@@ -139,16 +158,11 @@ const ProductFormScreen = () => {
   };
 
   const handleNormalPrint = async (base64: string) => {
-    const parsedPrice = parseFloat(price);
     await RNPrint.print({
       html: `
         <html>
-          <body style="text-align:center; padding:20px; font-family:sans-serif;">
+          <body style="text-align:center; padding:20px;">
             <img src="data:image/png;base64,${base64}" style="max-width:300px;" />
-            <p style="margin:6px 0 2px; font-size:14px; color:#333;">${barcode}</p>
-            <h2 style="margin:4px 0;">${name || 'Product'}</h2>
-            ${!isNaN(parsedPrice) && parsedPrice > 0 ? `<p style="margin:2px 0; font-size:16px; font-weight:bold;">${formatCurrency(parsedPrice)}</p>` : ''}
-            <p style="margin:4px 0; font-size:12px; color:#666;">${STORE_NAME}</p>
           </body>
         </html>
       `,
@@ -224,7 +238,7 @@ const ProductFormScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <AppBar title={isEditing ? 'Edit Product' : 'Add Product'} />
+      <AppBar title={isEditing ? 'Edit Product' : 'Add Product'} onBackPress={confirmGoBack} />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -387,7 +401,7 @@ const ProductFormScreen = () => {
             <Text style={styles.previewLabel}>Preview</Text>
             <ViewShot
               ref={barcodeRef}
-              options={{ format: 'png', quality: 1.0 }}>
+              options={{ format: 'png', quality: 1.0, result: 'tmpfile', pixelRatio: 4 }}>
               <BarcodeDisplay value={barcode} type={barcodeType} label={name || undefined} price={price} />
             </ViewShot>
             <View style={styles.barcodeActionsRow}>

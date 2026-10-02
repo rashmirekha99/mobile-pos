@@ -5,7 +5,8 @@ import { fonts } from '../../../../shared/theme';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_GAP = 12;
 const SCREEN_PADDING = 16;
-const CARD_SIZE = (SCREEN_WIDTH - SCREEN_PADDING * 2 - CARD_GAP) / 2;
+const COLUMNS = 3;
+const CARD_SIZE = (SCREEN_WIDTH - SCREEN_PADDING * 2 - CARD_GAP * (COLUMNS - 1)) / COLUMNS;
 
 const GetDashboardScreenStyles = (colors: ThemeColors) => {
   return StyleSheet.create({
@@ -93,50 +94,50 @@ const GetDashboardScreenStyles = (colors: ThemeColors) => {
     gridRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      justifyContent: 'space-between',
+      columnGap: CARD_GAP,
       rowGap: CARD_GAP,
     },
     gridCard: {
       width: CARD_SIZE,
-      height: CARD_SIZE * 0.85,
-      borderRadius: 20,
+      height: CARD_SIZE + 10,
+      borderRadius: 16,
       overflow: 'hidden',
       shadowColor: colors.SHADOW,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
+      shadowOpacity: 0.25,
       shadowRadius: 8,
       elevation: 5,
     },
     gridCardOverlay: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: '#00000010',
-      borderRadius: 20,
+      backgroundColor: 'rgba(255,255,255,0.08)',
+      borderRadius: 16,
     },
     gridCardContent: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      padding: 12,
+      padding: 8,
     },
     gridCardTextWrap: {
       alignItems: 'center',
-      marginTop: 10,
+      marginTop: 8,
     },
     gridTextIcon: {
-      fontSize: 38,
+      fontSize: 28,
     },
     gridTitle: {
-      fontSize: fonts.FONT_SIZE_16,
+      fontSize: fonts.FONT_SIZE_12,
       fontWeight: '700',
       color: colors.TEXT_WHITE,
       textAlign: 'center',
     },
     gridSubtitle: {
-      fontSize: fonts.FONT_SIZE_12,
+      fontSize: fonts.FONT_SIZE_10,
       fontWeight: '400',
-      color: 'rgba(255,255,255,0.7)',
+      color: 'rgba(255,255,255,0.75)',
       textAlign: 'center',
-      marginTop: 2,
+      marginTop: 1,
     },
 
     // Low stock section

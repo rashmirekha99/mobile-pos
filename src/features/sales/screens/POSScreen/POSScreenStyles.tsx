@@ -114,6 +114,42 @@ const GetPOSScreenStyles = (colors: ThemeColors) => {
       shadowRadius: 4,
       elevation: 8,
     },
+    subtotalRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    subtotalLabel: {
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.TEXT_SECONDARY,
+    },
+    subtotalAmount: {
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.TEXT_SECONDARY,
+    },
+    discountRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    discountLabel: {
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.TEXT_SECONDARY,
+    },
+    discountInput: {
+      backgroundColor: colors.INPUT_BACKGROUND,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.INPUT_TEXT,
+      borderWidth: 1,
+      borderColor: colors.INPUT_BORDER,
+      width: 100,
+      textAlign: 'right',
+    },
     totalRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',

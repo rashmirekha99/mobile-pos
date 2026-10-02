@@ -4,15 +4,17 @@ import { CartItem, Sale, SaleItem } from '../../../shared/types';
 export const createSale = async (
   db: SQLiteDatabase,
   items: CartItem[],
+  discount: number = 0,
 ): Promise<number> => {
-  const total = items.reduce(
+  const subtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0,
   );
+  const total = Math.max(subtotal - discount, 0);
 
   const [saleResult] = await db.executeSql(
-    'INSERT INTO sales (total) VALUES (?)',
-    [total],
+    'INSERT INTO sales (total, discount) VALUES (?, ?)',
+    [total, discount],
   );
 
   const saleId = saleResult.insertId;

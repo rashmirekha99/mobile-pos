@@ -29,7 +29,7 @@ const useCart = () => {
     [addItem],
   );
 
-  const handleCheckout = useCallback(async (): Promise<number | null> => {
+  const handleCheckout = useCallback(async (discount: number = 0): Promise<number | null> => {
     if (items.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to the cart first');
       return null;
@@ -37,7 +37,7 @@ const useCart = () => {
 
     try {
       const db = await getDatabase();
-      const saleId = await createSale(db, items);
+      const saleId = await createSale(db, items, discount);
       clear();
       return saleId;
     } catch (error) {

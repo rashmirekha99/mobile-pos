@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import RNPrint from 'react-native-print';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 import AppBar from '../../../../shared/components/AppBar';
-import MainButton from '../../../../shared/components/MainButton';
 import SupplierFilterDropdown from '../../../../shared/components/SupplierFilterDropdown';
 import useTheme from '../../../../shared/theme/useTheme';
 import GetInventoryScreenStyles from './InventoryScreenStyles';
@@ -129,7 +129,33 @@ const InventoryScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <AppBar title="Inventory Summary" />
+      <AppBar
+        title="Inventory Summary"
+        rightActions={[
+          {
+            icon: (
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 14H8v-4h8v4zm2-4v-2H6v2H4v-4c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v4h-2z"
+                  fill="#FFFFFF"
+                />
+              </Svg>
+            ),
+            onPress: handlePrint,
+          },
+          {
+            icon: (
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"
+                  fill="#FFFFFF"
+                />
+              </Svg>
+            ),
+            onPress: handleShare,
+          },
+        ]}
+      />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
@@ -202,14 +228,6 @@ const InventoryScreen = () => {
           <Text style={styles.emptyText}>No products added yet</Text>
         )}
 
-        <View style={styles.actionRow}>
-          <View style={styles.actionButton}>
-            <MainButton title="Print" onPress={handlePrint} />
-          </View>
-          <View style={styles.actionButton}>
-            <MainButton title="Share" onPress={handleShare} outline />
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );

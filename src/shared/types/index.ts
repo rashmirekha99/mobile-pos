@@ -23,6 +23,7 @@ export interface Supplier {
 export interface Sale {
   id: number;
   total: number;
+  discount: number;
   created_at: string;
 }
 

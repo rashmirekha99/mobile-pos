@@ -83,6 +83,23 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
       alignItems: 'center',
       paddingVertical: 8,
     },
+    subtotalLabel: {
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.TEXT_SECONDARY,
+    },
+    subtotalAmount: {
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.TEXT_SECONDARY,
+    },
+    discountLabel: {
+      fontSize: fonts.FONT_SIZE_14,
+      color: colors.ERROR,
+    },
+    discountAmount: {
+      fontSize: fonts.FONT_SIZE_14,
+      fontWeight: '600',
+      color: colors.ERROR,
+    },
     totalLabel: {
       fontSize: fonts.FONT_SIZE_18,
       fontWeight: '700',

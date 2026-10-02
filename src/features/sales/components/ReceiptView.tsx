@@ -60,6 +60,23 @@ const ReceiptView = ({ sale, items }: ReceiptViewProps) => {
 
       <View style={styles.divider} />
 
+      {sale.discount > 0 && (
+        <>
+          <View style={styles.totalRow}>
+            <Text style={styles.subtotalLabel}>Subtotal</Text>
+            <Text style={styles.subtotalAmount}>
+              {formatCurrency(sale.total + sale.discount)}
+            </Text>
+          </View>
+          <View style={styles.totalRow}>
+            <Text style={styles.discountLabel}>Discount</Text>
+            <Text style={styles.discountAmount}>
+              -{formatCurrency(sale.discount)}
+            </Text>
+          </View>
+        </>
+      )}
+
       <View style={styles.totalRow}>
         <Text style={styles.totalLabel}>TOTAL</Text>
         <Text style={styles.totalAmount}>{formatCurrency(sale.total)}</Text>
