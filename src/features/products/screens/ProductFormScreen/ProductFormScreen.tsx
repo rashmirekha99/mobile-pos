@@ -310,58 +310,60 @@ const ProductFormScreen = () => {
           {/* Pricing */}
           <View style={[styles.card, styles.cardSecondary]}>
             <Text style={styles.cardTitle}>Pricing</Text>
-            <View>
-              <View style={styles.labelRow}>
-                <Text style={styles.label}>Buying Price</Text>
+            <View style={styles.twoColumns}>
+              <View style={styles.columnItem}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.label}>Buying Price</Text>
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="0"
+                  placeholderTextColor="#a9acc9"
+                  value={buyingPrice}
+                  onChangeText={setBuyingPrice}
+                  keyboardType="decimal-pad"
+                />
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder="0"
-                placeholderTextColor="#a9acc9"
-                value={buyingPrice}
-                onChangeText={setBuyingPrice}
-                keyboardType="decimal-pad"
-              />
-            </View>
-            <View>
-              <View style={styles.labelRow}>
-                <Text style={styles.label}>
-                  Selling Price<Text style={styles.required}>*</Text>
-                </Text>
-                {marginPercent !== null ? (
-                  <TouchableOpacity onPress={applyMargin}>
-                    <LinearGradient
-                      colors={marginNegative ? ['#e5484d', '#e5484d'] : GRADIENT_COLORS}
-                      locations={marginNegative ? [0, 1] : GRADIENT_LOCATIONS}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.marginBadge}>
-                      <Text style={styles.marginBadgeText}>
-                        {marginPercent >= 0 ? '+' : ''}{marginPercent}%
-                      </Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity onPress={applyMargin}>
-                    <LinearGradient
-                      colors={GRADIENT_COLORS}
-                      locations={GRADIENT_LOCATIONS}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.marginBadge}>
-                      <Text style={styles.marginBadgeText}>+{profitMargin}%</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                )}
+              <View style={styles.columnItem}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.label}>
+                    Selling Price<Text style={styles.required}>*</Text>
+                  </Text>
+                  {marginPercent !== null ? (
+                    <TouchableOpacity onPress={applyMargin}>
+                      <LinearGradient
+                        colors={marginNegative ? ['#e5484d', '#e5484d'] : GRADIENT_COLORS}
+                        locations={marginNegative ? [0, 1] : GRADIENT_LOCATIONS}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.marginBadge}>
+                        <Text style={styles.marginBadgeText}>
+                          {marginPercent >= 0 ? '+' : ''}{marginPercent}%
+                        </Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity onPress={applyMargin}>
+                      <LinearGradient
+                        colors={GRADIENT_COLORS}
+                        locations={GRADIENT_LOCATIONS}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.marginBadge}>
+                        <Text style={styles.marginBadgeText}>+{profitMargin}%</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="0"
+                  placeholderTextColor="#a9acc9"
+                  value={price}
+                  onChangeText={setPrice}
+                  keyboardType="decimal-pad"
+                />
               </View>
-              <TextInput
-                style={styles.input}
-                placeholder="0"
-                placeholderTextColor="#a9acc9"
-                value={price}
-                onChangeText={setPrice}
-                keyboardType="decimal-pad"
-              />
             </View>
           </View>
 
