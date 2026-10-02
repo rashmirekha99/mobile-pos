@@ -6,15 +6,14 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
   return StyleSheet.create({
     container: {
       backgroundColor: colors.RECEIPT_BACKGROUND,
-      borderRadius: 12,
-      padding: 24,
-      marginHorizontal: 16,
-      borderWidth: 1,
-      borderColor: colors.RECEIPT_BORDER,
+      padding: 12,
+      borderRadius: 0,
+      marginHorizontal: 0,
+      borderWidth: 0,
     },
     header: {
       alignItems: 'center',
-      marginBottom: 20,
+      marginBottom: 8,
     },
     storeName: {
       fontSize: fonts.FONT_SIZE_20,
@@ -24,12 +23,13 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
     receiptTitle: {
       fontSize: fonts.FONT_SIZE_14,
       color: colors.TEXT_SECONDARY,
-      marginTop: 4,
+      marginTop: 2,
     },
     dateText: {
       fontSize: fonts.FONT_SIZE_12,
-      color: colors.TEXT_TERTIARY,
-      marginTop: 4,
+      color: '#000000',
+      fontWeight: '600',
+      marginTop: 2,
     },
     receiptId: {
       fontSize: fonts.FONT_SIZE_12,
@@ -38,15 +38,15 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
     },
     divider: {
       borderBottomWidth: 1,
-      borderBottomColor: colors.DIVIDER,
+      borderBottomColor: '#777777',
       borderStyle: 'dashed',
-      marginVertical: 12,
+      marginVertical: 6,
     },
     itemRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      paddingVertical: 6,
+      paddingVertical: 3,
     },
     itemName: {
       flex: 1,
@@ -70,7 +70,7 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
     columnHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingVertical: 6,
+      paddingVertical: 3,
     },
     columnHeaderText: {
       fontSize: fonts.FONT_SIZE_12,
@@ -81,7 +81,7 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingVertical: 8,
+      paddingVertical: 4,
     },
     subtotalLabel: {
       fontSize: fonts.FONT_SIZE_14,
@@ -112,7 +112,7 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
     },
     footer: {
       alignItems: 'center',
-      marginTop: 16,
+      marginTop: 2,
     },
     thankYou: {
       fontSize: fonts.FONT_SIZE_16,
@@ -120,9 +120,11 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
       color: colors.TEXT_PRIMARY,
     },
     footerNote: {
-      fontSize: fonts.FONT_SIZE_12,
-      color: colors.TEXT_TERTIARY,
-      marginTop: 4,
+      fontSize: fonts.FONT_SIZE_14,
+      color: '#000000',
+      fontWeight: '700',
+      marginTop: 2,
+      marginBottom: 24,
     },
   });
 };

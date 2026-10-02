@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.13)
+project(appmodules)
+add_link_options(-lc++_shared)
+include(${REACT_ANDROID_DIR}/cmake-utils/ReactNative-application.cmake)
+target_link_libraries(appmodules c++_shared)

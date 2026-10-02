@@ -157,6 +157,7 @@ const PrinterSettingsScreen = () => {
         const db = await getDatabase();
         await setSetting(db, 'printer_address', device.macAddress);
         await setSetting(db, 'printer_name', device.deviceName);
+        await setSetting(db, 'printer_auto_connect', 'true');
       } catch {
         // Ignore save errors
       }
@@ -172,6 +173,12 @@ const PrinterSettingsScreen = () => {
     const name = connectedDevice?.deviceName || 'printer';
     await disconnectPrinter();
     disconnect();
+    try {
+      const db = await getDatabase();
+      await setSetting(db, 'printer_auto_connect', 'false');
+    } catch {
+      // Ignore save errors
+    }
     showToast(`Disconnected from ${name}`);
   };
 

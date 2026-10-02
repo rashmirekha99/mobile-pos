@@ -29,7 +29,7 @@ import {
   SaleServiceItem,
 } from '../../services/salesService';
 import { STORE_NAME } from '../../../../configs/Constants';
-import { formatCurrency, formatDateTime } from '../../../../shared/utils/format';
+import { formatCurrency, formatDate, formatTime } from '../../../../shared/utils/format';
 import RNFS from 'react-native-fs';
 import { usePrinterStore } from '../../../../shared/store/printerStore';
 import {
@@ -189,14 +189,14 @@ const ReceiptScreen = () => {
       ...items.map(
         (item) => `
         <tr>
-          <td style="padding:6px 0;">${item.product_name}</td>
+          <td style="padding:2px 0;">${item.product_name}</td>
           <td style="text-align:center;">${item.quantity}</td>
           <td style="text-align:right;">${formatCurrency(item.subtotal)}</td>
         </tr>`),
       ...svcItems.map(
         (item) => `
         <tr>
-          <td style="padding:6px 0;">${item.service_name}</td>
+          <td style="padding:2px 0;">${item.service_name}</td>
           <td style="text-align:center;">${item.quantity}</td>
           <td style="text-align:right;">${formatCurrency(item.subtotal)}</td>
         </tr>`),
@@ -205,21 +205,21 @@ const ReceiptScreen = () => {
     await RNPrint.print({
       html: `
         <html>
-        <body style="font-family:monospace; max-width:320px; margin:0 auto; padding:20px;">
-          <h2 style="text-align:center; margin-bottom:2px;">${STORE_NAME}</h2>
-          <p style="text-align:center; color:#666; margin:4px 0;">Sales Receipt</p>
-          <p style="text-align:center; color:#999; margin:2px 0;">${formatDateTime(sale.created_at)}</p>
-          <p style="text-align:center; color:#999; margin:2px 0 12px;">Receipt #${sale.id}</p>
-          <hr style="border:none; border-top:1px dashed #ccc;" />
-          <table style="width:100%; border-collapse:collapse; margin:8px 0;">
+        <body style="font-family:monospace; max-width:320px; margin:0 auto; padding:6px 12px 28px;">
+          <h2 style="text-align:center; margin:0 0 2px;">${STORE_NAME}</h2>
+          <p style="text-align:center; color:#666; margin:2px 0;">Sales Receipt</p>
+          <p style="text-align:center; color:#000; font-weight:600; font-size:12px; white-space:nowrap; margin:2px 0;">Date: ${formatDate(sale.created_at)} &nbsp; Time: ${formatTime(sale.created_at)}</p>
+          <p style="text-align:center; color:#999; margin:2px 0 6px;">Receipt #${sale.id}</p>
+          <hr style="border:none; border-top:1px dashed #999; margin:4px 0;" />
+          <table style="width:100%; border-collapse:collapse; margin:4px 0;">
             <tr style="border-bottom:1px solid #eee;">
-              <th style="text-align:left; padding:6px 0; font-size:12px;">Item</th>
+              <th style="text-align:left; padding:3px 0; font-size:12px;">Item</th>
               <th style="text-align:center; font-size:12px;">Qty</th>
               <th style="text-align:right; font-size:12px;">Subtotal</th>
             </tr>
             ${allItemsHtml}
           </table>
-          <hr style="border:none; border-top:1px dashed #ccc;" />
+          <hr style="border:none; border-top:1px dashed #999; margin:4px 0;" />
           ${sale.discount > 0 ? `
           <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:14px; color:#666;">
             <span>Subtotal</span>
@@ -230,13 +230,13 @@ const ReceiptScreen = () => {
             <span>-${formatCurrency(sale.discount)}</span>
           </div>
           ` : ''}
-          <div style="display:flex; justify-content:space-between; padding:10px 0; font-size:18px; font-weight:bold;">
+          <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:18px; font-weight:bold;">
             <span>TOTAL</span>
             <span>${formatCurrency(sale.total)}</span>
           </div>
-          <hr style="border:none; border-top:1px dashed #ccc;" />
-          <p style="text-align:center; margin-top:16px; font-weight:bold;">Thank You!</p>
-          <p style="text-align:center; color:#999; font-size:12px;">Please come again</p>
+          <hr style="border:none; border-top:1px dashed #999; margin:4px 0;" />
+          <p style="text-align:center; margin:6px 0 0; font-size:14px; font-weight:bold;">Thank You!</p>
+          <p style="text-align:center; color:#000; font-size:12px; font-weight:bold; margin:2px 0 24px;">Please come again</p>
         </body>
         </html>
       `,
@@ -322,11 +322,20 @@ const ReceiptScreen = () => {
       />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {!editMode ? (
-          <ViewShot
-            ref={viewShotRef}
-            options={{ format: 'png', quality: 1.0 }}>
-            <ReceiptView sale={sale} items={items} serviceItems={svcItems} />
-          </ViewShot>
+          <View
+            style={{
+              marginHorizontal: 8,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.RECEIPT_BORDER,
+              overflow: 'hidden',
+            }}>
+            <ViewShot
+              ref={viewShotRef}
+              options={{ format: 'png', quality: 1.0 }}>
+              <ReceiptView sale={sale} items={items} serviceItems={svcItems} />
+            </ViewShot>
+          </View>
         ) : (
           <View style={styles.editContainer}>
             <Text style={styles.editTitle}>Edit Sale #{sale.id}</Text>

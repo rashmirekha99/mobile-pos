@@ -75,3 +75,39 @@ if (fs.existsSync(printPath)) {
     console.log('Patched react-native-print: bumped compileSdkVersion to 34');
   }
 }
+
+// Patch VisionCamera and explicitly link the shared Android C++ runtime.
+const visionCameraCmakePath = path.join(
+  __dirname,
+  '..',
+  'node_modules',
+  'react-native-vision-camera',
+  'android',
+  'CMakeLists.txt',
+);
+if (fs.existsSync(visionCameraCmakePath)) {
+  let content = fs.readFileSync(visionCameraCmakePath, 'utf8');
+  const logLib = '        ${LOG_LIB}                          # <-- Logcat logger';
+  if (!content.includes('        c++_shared') && content.includes(logLib)) {
+    content = content.replace(logLib, `        c++_shared\n${logLib}`);
+    fs.writeFileSync(visionCameraCmakePath, content, 'utf8');
+    console.log('Patched react-native-vision-camera: linked c++_shared');
+  }
+}
+// Patch react-native-screens: link the shared Android C++ runtime.
+const screensCmakePath = path.join(
+  __dirname,
+  '..',
+  'node_modules',
+  'react-native-screens',
+  'android',
+  'CMakeLists.txt',
+);
+if (fs.existsSync(screensCmakePath)) {
+  let content = fs.readFileSync(screensCmakePath, 'utf8');
+  if (content.includes('target_link_libraries(rnscreens') && !content.includes('    c++_shared')) {
+    content = content.replace(/    android\r?\n\)/, '    android\n    c++_shared\n)');
+    fs.writeFileSync(screensCmakePath, content, 'utf8');
+    console.log('Patched react-native-screens: linked c++_shared');
+  }
+}

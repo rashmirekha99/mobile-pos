@@ -5,7 +5,7 @@ import GetReceiptViewStyles from './ReceiptViewStyles';
 import { Sale, SaleItem } from '../../../shared/types';
 import { SaleServiceItem } from '../services/salesService';
 import { STORE_NAME } from '../../../configs/Constants';
-import { formatCurrency, formatDateTime } from '../../../shared/utils/format';
+import { formatCurrency, formatDate, formatTime } from '../../../shared/utils/format';
 
 interface ReceiptViewProps {
   sale: Sale;
@@ -22,7 +22,7 @@ const ReceiptView = ({ sale, items, serviceItems = [] }: ReceiptViewProps) => {
       <View style={styles.header}>
         <Text style={styles.storeName}>{STORE_NAME}</Text>
         <Text style={styles.receiptTitle}>Sales Receipt</Text>
-        <Text style={styles.dateText}>{formatDateTime(sale.created_at)}</Text>
+        <Text style={styles.dateText}>Date: {formatDate(sale.created_at)}  Time: {formatTime(sale.created_at)}</Text>
         <Text style={styles.receiptId}>Receipt #{sale.id}</Text>
       </View>
 
