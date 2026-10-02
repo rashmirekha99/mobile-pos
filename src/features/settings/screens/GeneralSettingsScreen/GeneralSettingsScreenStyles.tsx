@@ -137,6 +137,17 @@ const GetGeneralSettingsScreenStyles = (colors: ThemeColors) => {
       fontWeight: '600',
       color: colors.TEXT_SECONDARY,
     },
+    resetButton: {
+      backgroundColor: colors.ERROR,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    resetButtonText: {
+      color: '#FFFFFF',
+      fontSize: fonts.FONT_SIZE_16,
+      fontWeight: '700',
+    },
   });
 };
 

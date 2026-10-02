@@ -16,7 +16,7 @@ import MainButton from '../../../../shared/components/MainButton';
 import useTheme from '../../../../shared/theme/useTheme';
 import GetGeneralSettingsScreenStyles from './GeneralSettingsScreenStyles';
 import { useSettingsStore } from '../../../../shared/store/settingsStore';
-import { getDatabase } from '../../../../shared/db/database';
+import { getDatabase, resetSalesData } from '../../../../shared/db/database';
 import { getSetting, setSetting } from '../../../../shared/services/settingsService';
 import {
   backupDatabase,
@@ -243,6 +243,39 @@ const GeneralSettingsScreen = () => {
         {(backupLoading || restoreLoading) && (
           <ActivityIndicator style={{ marginTop: 12 }} color={colors.PRIMARY} />
         )}
+
+        <View style={styles.divider} />
+
+        <Text style={styles.sectionTitle}>Reset Sales Data</Text>
+        <Text style={styles.description}>
+          Delete all sales transactions while keeping your products, services, and suppliers intact.
+        </Text>
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={() => {
+            Alert.alert(
+              'Reset Sales Data',
+              'This will permanently delete ALL sales transactions, sale items, and service sales. Products, services, and suppliers will NOT be affected.\n\nThis cannot be undone. Are you sure?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Reset',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      const db = await getDatabase();
+                      await resetSalesData(db);
+                      Alert.alert('Done', 'All sales data has been cleared.');
+                    } catch {
+                      Alert.alert('Error', 'Failed to reset sales data.');
+                    }
+                  },
+                },
+              ],
+            );
+          }}>
+          <Text style={styles.resetButtonText}>Reset Sales Data</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       <Modal

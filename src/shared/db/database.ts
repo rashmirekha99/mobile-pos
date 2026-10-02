@@ -150,6 +150,13 @@ export const getDatabase = async (): Promise<SQLiteDatabase> => {
   return dbInstance;
 };
 
+export const resetSalesData = async (db: SQLiteDatabase): Promise<void> => {
+  await db.executeSql('DELETE FROM sale_items;');
+  await db.executeSql('DELETE FROM sale_service_items;');
+  await db.executeSql('DELETE FROM service_sales;');
+  await db.executeSql('DELETE FROM sales;');
+};
+
 export const closeDatabase = async (): Promise<void> => {
   if (dbInstance) {
     await dbInstance.close();
