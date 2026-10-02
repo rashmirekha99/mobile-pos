@@ -112,6 +112,41 @@ export const getDatabase = async (): Promise<SQLiteDatabase> => {
     // Column already exists
   }
 
+  // Migration: services table
+  await dbInstance.executeSql(`
+    CREATE TABLE IF NOT EXISTS services (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      name        TEXT    NOT NULL,
+      price       REAL    NOT NULL,
+      created_at  TEXT    DEFAULT (datetime('now','localtime'))
+    );
+  `);
+
+  // Migration: service_sales table (legacy, kept for compat)
+  await dbInstance.executeSql(`
+    CREATE TABLE IF NOT EXISTS service_sales (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      service_id  INTEGER NOT NULL,
+      amount      REAL    NOT NULL,
+      created_at  TEXT    DEFAULT (datetime('now','localtime')),
+      FOREIGN KEY (service_id) REFERENCES services(id)
+    );
+  `);
+
+  // Migration: sale_service_items table (services linked to sales for unified receipts)
+  await dbInstance.executeSql(`
+    CREATE TABLE IF NOT EXISTS sale_service_items (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      sale_id     INTEGER NOT NULL,
+      service_id  INTEGER NOT NULL,
+      quantity    INTEGER NOT NULL DEFAULT 1,
+      price       REAL    NOT NULL,
+      subtotal    REAL    NOT NULL,
+      FOREIGN KEY (sale_id)    REFERENCES sales(id),
+      FOREIGN KEY (service_id) REFERENCES services(id)
+    );
+  `);
+
   return dbInstance;
 };
 

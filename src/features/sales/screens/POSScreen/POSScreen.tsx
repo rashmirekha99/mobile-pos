@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,15 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 import { RootStackParamList } from '../../../../shared/navigators/RootStackParamsList';
+
+const GRADIENT_COLORS = ['#02078A', '#010450', '#01022E'];
+const GRADIENT_LOCATIONS = [0, 0.55, 1];
 import AppBar from '../../../../shared/components/AppBar';
 import MainButton from '../../../../shared/components/MainButton';
 import useTheme from '../../../../shared/theme/useTheme';
@@ -17,10 +22,15 @@ import GetPOSScreenStyles from './POSScreenStyles';
 import CartItemRow from '../../components/CartItemRow';
 import ScannerModal from '../../components/ScannerModal';
 import useCart from '../../hooks/useCart';
-import { Product } from '../../../../shared/types';
+import { Product, Service, CartItem, ServiceCartItem } from '../../../../shared/types';
 import { formatCurrency } from '../../../../shared/utils/format';
 import { getDatabase } from '../../../../shared/db/database';
 import { searchProducts } from '../../../products/services/productService';
+import { getAllServices } from '../../../services/services/serviceService';
+
+type UnifiedCartItem =
+  | { type: 'product'; data: CartItem }
+  | { type: 'service'; data: ServiceCartItem };
 
 const POSScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -29,12 +39,18 @@ const POSScreen = () => {
 
   const {
     items,
+    serviceItems,
     addItem,
     removeItem,
     increment,
     decrement,
+    addService,
+    removeService,
+    incrementService,
+    decrementService,
     clear,
     total,
+    totalItemCount,
     handleBarcodeScan,
     handleCheckout,
   } = useCart();
@@ -43,6 +59,20 @@ const POSScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [discountInput, setDiscountInput] = useState('');
+  const [services, setServices] = useState<Service[]>([]);
+  const [servicePickerVisible, setServicePickerVisible] = useState(false);
+  const [serviceSearch, setServiceSearch] = useState('');
+
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const db = await getDatabase();
+        const data = await getAllServices(db);
+        setServices(data);
+      } catch {}
+    };
+    loadServices();
+  }, []);
 
   const handleSearch = useCallback(
     async (query: string) => {
@@ -72,11 +102,29 @@ const POSScreen = () => {
     await handleBarcodeScan(barcode);
   };
 
+  const handleServiceSelect = (service: Service) => {
+    setServicePickerVisible(false);
+    setServiceSearch('');
+    addService(service);
+  };
+
+  const filteredServices = serviceSearch.trim().length > 0
+    ? services.filter((s) =>
+        s.name.toLowerCase().includes(serviceSearch.trim().toLowerCase()),
+      )
+    : services;
+
   const discount = parseFloat(discountInput) || 0;
   const finalTotal = Math.max(total - discount, 0);
 
+  // Build unified list for FlatList
+  const unifiedItems: UnifiedCartItem[] = [
+    ...items.map((item): UnifiedCartItem => ({ type: 'product', data: item })),
+    ...serviceItems.map((item): UnifiedCartItem => ({ type: 'service', data: item })),
+  ];
+
   const onCheckout = () => {
-    if (items.length === 0) {
+    if (totalItemCount === 0) {
       Alert.alert('Empty Cart', 'Please add items to cart first');
       return;
     }
@@ -108,8 +156,22 @@ const POSScreen = () => {
         <TouchableOpacity
           style={styles.scanButton}
           onPress={() => setScannerVisible(true)}>
+          <LinearGradient
+            colors={GRADIENT_COLORS}
+            locations={GRADIENT_LOCATIONS}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.scanButtonGradient}
+          />
           <Text style={styles.scanButtonText}>Scan</Text>
         </TouchableOpacity>
+        {services.length > 0 && (
+          <TouchableOpacity
+            style={[styles.scanButton, { backgroundColor: colors.ACCENT }]}
+            onPress={() => setServicePickerVisible(true)}>
+            <Text style={styles.scanButtonText}>Services</Text>
+          </TouchableOpacity>
+        )}
         <TextInput
           style={styles.searchInput}
           placeholder="Search products..."
@@ -141,10 +203,10 @@ const POSScreen = () => {
         <View>
           <Text style={styles.cartTitle}>Cart</Text>
           <Text style={styles.cartCount}>
-            {items.length} item{items.length !== 1 ? 's' : ''}
+            {totalItemCount} item{totalItemCount !== 1 ? 's' : ''}
           </Text>
         </View>
-        {items.length > 0 && (
+        {totalItemCount > 0 && (
           <TouchableOpacity
             style={styles.clearButton}
             onPress={() =>
@@ -160,16 +222,40 @@ const POSScreen = () => {
 
       <FlatList
         style={styles.cartList}
-        data={items}
-        keyExtractor={(item) => item.product.id.toString()}
-        renderItem={({ item }) => (
-          <CartItemRow
-            item={item}
-            onIncrement={() => increment(item.product.id)}
-            onDecrement={() => decrement(item.product.id)}
-            onRemove={() => removeItem(item.product.id)}
-          />
-        )}
+        data={unifiedItems}
+        keyExtractor={(item) =>
+          item.type === 'product'
+            ? `p-${item.data.product.id}`
+            : `s-${item.data.service.id}`
+        }
+        renderItem={({ item: unified }) => {
+          if (unified.type === 'product') {
+            const ci = unified.data;
+            return (
+              <CartItemRow
+                name={ci.product.name}
+                price={ci.product.price}
+                quantity={ci.quantity}
+                onIncrement={() => increment(ci.product.id)}
+                onDecrement={() => decrement(ci.product.id)}
+                onRemove={() => removeItem(ci.product.id)}
+              />
+            );
+          } else {
+            const si = unified.data;
+            return (
+              <CartItemRow
+                name={si.service.name}
+                price={si.service.price}
+                quantity={si.quantity}
+                isService
+                onIncrement={() => incrementService(si.service.id)}
+                onDecrement={() => decrementService(si.service.id)}
+                onRemove={() => removeService(si.service.id)}
+              />
+            );
+          }
+        }}
         ListEmptyComponent={
           <Text style={styles.emptyCart}>
             Scan or search to add products
@@ -202,7 +288,7 @@ const POSScreen = () => {
         <MainButton
           title="Checkout"
           onPress={onCheckout}
-          disabled={items.length === 0}
+          disabled={totalItemCount === 0}
         />
       </View>
 
@@ -211,6 +297,49 @@ const POSScreen = () => {
         onClose={() => setScannerVisible(false)}
         onScanned={handleScanned}
       />
+
+      <Modal
+        visible={servicePickerVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => { setServicePickerVisible(false); setServiceSearch(''); }}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => { setServicePickerVisible(false); setServiceSearch(''); }}>
+          <View style={styles.servicePickerContainer}>
+            <Text style={styles.servicePickerTitle}>Select Service</Text>
+            <View style={styles.serviceSearchContainer}>
+              <TextInput
+                style={styles.serviceSearchInput}
+                placeholder="Search services..."
+                placeholderTextColor={colors.INPUT_PLACEHOLDER}
+                value={serviceSearch}
+                onChangeText={setServiceSearch}
+                autoFocus
+              />
+            </View>
+            <FlatList
+              data={filteredServices}
+              keyboardShouldPersistTaps="handled"
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.servicePickerItem}
+                  onPress={() => handleServiceSelect(item)}>
+                  <Text style={styles.servicePickerName}>{item.name}</Text>
+                  <Text style={styles.servicePickerPrice}>
+                    {formatCurrency(item.price)}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <Text style={styles.emptyCart}>No services available</Text>
+              }
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };

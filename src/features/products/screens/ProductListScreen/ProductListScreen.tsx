@@ -13,6 +13,7 @@ import {
   useFocusEffect,
   NavigationProp,
 } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 import { RootStackParamList } from '../../../../shared/navigators/RootStackParamsList';
 import AppBar from '../../../../shared/components/AppBar';
 import useTheme from '../../../../shared/theme/useTheme';
@@ -25,6 +26,9 @@ import {
   searchProducts,
   deleteProduct,
 } from '../../services/productService';
+
+const GRADIENT_COLORS = ['#02078A', '#010450', '#01022E'];
+const GRADIENT_LOCATIONS = [0, 0.55, 1];
 
 const ProductListScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -106,7 +110,15 @@ const ProductListScreen = () => {
       />
       <TouchableOpacity
         style={styles.fab}
+        activeOpacity={0.85}
         onPress={() => navigation.navigate('ProductForm')}>
+        <LinearGradient
+          colors={GRADIENT_COLORS}
+          locations={GRADIENT_LOCATIONS}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.fabGradient}
+        />
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
     </SafeAreaView>

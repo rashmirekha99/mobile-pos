@@ -2,9 +2,13 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import useTheme from '../theme/useTheme';
 import GetAppBarStyles from './AppBarStyles';
+
+const APPBAR_GRADIENT = ['#02078A', '#010450', '#01022E'];
+const APPBAR_GRADIENT_LOCATIONS = [0, 0.55, 1];
 
 interface RightAction {
   icon: React.ReactNode;
@@ -45,9 +49,14 @@ const AppBar = ({
     <>
       <StatusBar
         barStyle="light-content"
-        backgroundColor={colors.APPBAR_BACKGROUND}
+        backgroundColor="#02078A"
       />
-      <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+      <LinearGradient
+        colors={APPBAR_GRADIENT}
+        locations={APPBAR_GRADIENT_LOCATIONS}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.container, { paddingTop: insets.top + 12 }]}>
         <View style={styles.titleRow}>
           {showBackButton ? (
             <TouchableOpacity
@@ -87,7 +96,7 @@ const AppBar = ({
             <View style={styles.iconPlaceholder} />
           )}
         </View>
-      </View>
+      </LinearGradient>
     </>
   );
 };

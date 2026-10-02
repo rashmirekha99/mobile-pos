@@ -3,15 +3,17 @@ import { View, Text } from 'react-native';
 import useTheme from '../../../shared/theme/useTheme';
 import GetReceiptViewStyles from './ReceiptViewStyles';
 import { Sale, SaleItem } from '../../../shared/types';
+import { SaleServiceItem } from '../services/salesService';
 import { STORE_NAME } from '../../../configs/Constants';
 import { formatCurrency, formatDateTime } from '../../../shared/utils/format';
 
 interface ReceiptViewProps {
   sale: Sale;
   items: Array<SaleItem & { product_name: string }>;
+  serviceItems?: Array<SaleServiceItem & { service_name: string }>;
 }
 
-const ReceiptView = ({ sale, items }: ReceiptViewProps) => {
+const ReceiptView = ({ sale, items, serviceItems = [] }: ReceiptViewProps) => {
   const { colors } = useTheme();
   const styles = GetReceiptViewStyles(colors);
 
@@ -47,9 +49,21 @@ const ReceiptView = ({ sale, items }: ReceiptViewProps) => {
       <View style={styles.divider} />
 
       {items.map((item) => (
-        <View key={item.id} style={styles.itemRow}>
+        <View key={`p-${item.id}`} style={styles.itemRow}>
           <Text style={styles.itemName} numberOfLines={1}>
             {item.product_name}
+          </Text>
+          <Text style={styles.itemQty}>x{item.quantity}</Text>
+          <Text style={styles.itemSubtotal}>
+            {formatCurrency(item.subtotal)}
+          </Text>
+        </View>
+      ))}
+
+      {serviceItems.map((item) => (
+        <View key={`s-${item.id}`} style={styles.itemRow}>
+          <Text style={styles.itemName} numberOfLines={1}>
+            {item.service_name}
           </Text>
           <Text style={styles.itemQty}>x{item.quantity}</Text>
           <Text style={styles.itemSubtotal}>

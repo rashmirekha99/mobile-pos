@@ -1,22 +1,23 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useNavigation,
   useFocusEffect,
   NavigationProp,
 } from '@react-navigation/native';
-import { SvgProps } from 'react-native-svg';
+import LinearGradient from 'react-native-linear-gradient';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { RootStackParamList } from '../../../../shared/navigators/RootStackParamsList';
-import AppBar from '../../../../shared/components/AppBar';
 import useTheme from '../../../../shared/theme/useTheme';
 import GetDashboardScreenStyles from './DashboardScreenStyles';
 import useDashboard from '../../hooks/useDashboard';
 import { formatCurrency } from '../../../../shared/utils/format';
 import { APP_NAME } from '../../../../configs/Constants';
-import NewSaleIcon from '../../../../assets/images/NewSale.svg';
-import ProductsIcon from '../../../../assets/images/Products.svg';
-import DailyReportIcon from '../../../../assets/images/DailyReport.svg';
+
+const GRADIENT_COLORS = ['#02078A', '#010450', '#01022E'];
+const GRADIENT_LOCATIONS = [0, 0.55, 1];
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -28,14 +29,117 @@ const getGreeting = () => {
 const getFormattedDate = () => {
   return new Date().toLocaleDateString('en-US', {
     weekday: 'long',
-    month: 'long',
     day: 'numeric',
+    month: 'long',
+    year: 'numeric',
   });
 };
+
+// Inline SVG icon components
+const LogoIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const DollarIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const SalesIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const PlusIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 5v14M5 12h14" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const ProductsIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const ChartIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const InventoryIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path d="M3 7h18v13H3zM3 7l3-4h12l3 4M9 12h6" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const SupplierIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path d="M1 6h13v10H1zM14 9h5l3 3v4h-8M6 19a2 2 0 100-4 2 2 0 000 4zM18 19a2 2 0 100-4 2 2 0 000 4z" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const PrinterIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path d="M6 9V3h12v6M6 18H3v-7h18v7h-3M6 14h12v7H6z" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const SettingsIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Circle cx={12} cy={12} r={3} stroke={color} strokeWidth={2} />
+    <Path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const ServiceIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const ServiceReportIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const WarningIcon = ({ color }: { color: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 3L2 21h20L12 3zM12 10v5M12 18h.01" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+type ActionItem = {
+  title: string;
+  subtitle: string;
+  icon: (color: string) => React.ReactNode;
+  screen: keyof RootStackParamList;
+};
+
+const ACTION_ITEMS: ActionItem[] = [
+  { title: 'Products', subtitle: 'Manage items', icon: (c) => <ProductsIcon color={c} />, screen: 'ProductList' },
+  { title: 'Daily Report', subtitle: 'View analytics', icon: (c) => <ChartIcon color={c} />, screen: 'DailyReport' },
+  { title: 'Inventory', subtitle: 'Stock level', icon: (c) => <InventoryIcon color={c} />, screen: 'Inventory' },
+  { title: 'Services', subtitle: 'Manage services', icon: (c) => <ServiceIcon color={c} />, screen: 'ServiceList' },
+  { title: 'Service Report', subtitle: 'Service sales', icon: (c) => <ServiceReportIcon color={c} />, screen: 'ServiceReport' },
+  { title: 'Suppliers', subtitle: 'Manage suppliers', icon: (c) => <SupplierIcon color={c} />, screen: 'SupplierList' },
+  { title: 'Printer', subtitle: 'Bluetooth print', icon: (c) => <PrinterIcon color={c} />, screen: 'PrinterSettings' },
+  { title: 'Settings', subtitle: 'General settings', icon: (c) => <SettingsIcon color={c} />, screen: 'GeneralSettings' },
+];
+
+const LOW_STOCK_THRESHOLD = 25;
 
 const DashboardScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = GetDashboardScreenStyles(colors);
   const { todaySales, todayCount, lowStockItems, loadDashboard } = useDashboard();
 
@@ -48,174 +152,157 @@ const DashboardScreen = () => {
   const greeting = useMemo(() => getGreeting(), []);
   const dateStr = useMemo(() => getFormattedDate(), []);
 
-  const actionCards: Array<{
-    title: string;
-    subtitle: string;
-    Icon?: React.FC<SvgProps>;
-    textIcon?: string;
-    color: string;
-    screen: keyof RootStackParamList;
-  }> = [
-    {
-      title: 'New Sale',
-      subtitle: 'Start selling',
-      Icon: NewSaleIcon,
-      color: colors.DASHBOARD_CARD_1,
-      screen: 'POS',
-    },
-    {
-      title: 'Products',
-      subtitle: 'Manage items',
-      Icon: ProductsIcon,
-      color: colors.DASHBOARD_CARD_2,
-      screen: 'ProductList',
-    },
-    {
-      title: 'Daily Report',
-      subtitle: 'View analytics',
-      Icon: DailyReportIcon,
-      color: colors.DASHBOARD_CARD_3,
-      screen: 'DailyReport',
-    },
-    {
-      title: 'Inventory',
-      subtitle: 'Stock levels',
-      textIcon: '📦',
-      color: '#A27CDE',
-      screen: 'Inventory',
-    },
-    {
-      title: 'Suppliers',
-      subtitle: 'Manage suppliers',
-      textIcon: '👥',
-      color:'#DECC7C',
-      screen: 'SupplierList',
-    },
-    {
-      title: 'Printer',
-      subtitle: 'Bluetooth setup',
-      textIcon: '🖨',
-      color: '#DE7C7C',
-      screen: 'PrinterSettings',
-    },
-    {
-      title: 'Settings',
-      subtitle: 'General config',
-      textIcon: '⚙',
-      color: colors.TEXT_SECONDARY,
-      screen: 'GeneralSettings',
-    },
-  ];
+  const actionPairs = useMemo(() => {
+    const pairs: ActionItem[][] = [];
+    for (let i = 0; i < ACTION_ITEMS.length; i += 2) {
+      pairs.push(ACTION_ITEMS.slice(i, i + 2));
+    }
+    return pairs;
+  }, []);
 
   return (
     <SafeAreaView
       style={styles.container}
-      edges={
-        Platform.OS === 'ios'
-          ? ['top', 'bottom', 'left', 'right']
-          : ['bottom', 'left', 'right']
-      }>
-      <AppBar title={APP_NAME} showBackButton={false} />
+      edges={['bottom', 'left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor="#02078A" />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.headerSection}>
-          <Text style={styles.greeting}>{greeting}</Text>
-          <Text style={styles.dateText}>{dateStr}</Text>
-        </View>
-
-        <View style={styles.summaryRow}>
-          <View style={[styles.summaryCard, styles.summaryCardRevenue]}>
-            <View style={[styles.summaryIconCircle, { backgroundColor: colors.PRIMARY + '20' }]}>
-              <Text style={styles.summaryEmoji}>$</Text>
-            </View>
-            <Text style={[styles.summaryValue, { color: colors.PRIMARY }]}>
-              {formatCurrency(todaySales)}
-            </Text>
-            <Text style={styles.summaryLabel}>Revenue</Text>
-          </View>
-          <View style={[styles.summaryCard, styles.summaryCardSales]}>
-            <View style={[styles.summaryIconCircle, { backgroundColor: colors.SECONDARY + '20' }]}>
-              <Text style={styles.summaryEmoji}>#</Text>
-            </View>
-            <Text style={[styles.summaryValue, { color: colors.SECONDARY }]}>
-              {todayCount}
-            </Text>
-            <Text style={styles.summaryLabel}>Sales</Text>
-          </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.gridRow}>
-          {actionCards.map((card) => (
-            <TouchableOpacity
-              key={card.screen}
-              style={[styles.gridCard, { backgroundColor: card.color }]}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate(card.screen)}>
-              <View style={styles.gridCardOverlay} />
-              <View style={styles.gridCardContent}>
-                {card.Icon ? (
-                  <card.Icon width={32} height={32} />
-                ) : (
-                  <Text style={styles.gridTextIcon}>{card.textIcon}</Text>
-                )}
-                <View style={styles.gridCardTextWrap}>
-                  <Text style={styles.gridTitle}>{card.title}</Text>
-                  <Text style={styles.gridSubtitle}>{card.subtitle}</Text>
-                </View>
+        {/* Hero Header */}
+        <LinearGradient
+          colors={GRADIENT_COLORS}
+          locations={GRADIENT_LOCATIONS}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.hero, { paddingTop: insets.top + 18 }]}>
+          <View style={styles.heroCircleLarge} />
+          <View style={styles.heroCircleSmall} />
+          <View style={styles.heroTopRow}>
+            <View style={styles.brand}>
+              <View style={styles.logoBox}>
+                <LogoIcon />
               </View>
-            </TouchableOpacity>
+              <Text style={styles.brandText}>{APP_NAME}</Text>
+            </View>
+            <Text style={styles.pill}>● Open</Text>
+          </View>
+          <View style={styles.heroGreeting}>
+            <Text style={styles.heroDate}>{dateStr}</Text>
+            <Text style={styles.heroTitle}>{greeting}</Text>
+          </View>
+        </LinearGradient>
+
+        {/* Stats Cards */}
+        <View style={styles.statsSection}>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <View style={styles.statIconBox}>
+                <DollarIcon color={colors.PRIMARY} />
+              </View>
+              <Text style={styles.statLabel}>Revenue</Text>
+              <Text style={styles.statValue}>{formatCurrency(todaySales)}</Text>
+            </View>
+            <View style={styles.statCard}>
+              <View style={styles.statIconBox}>
+                <SalesIcon color={colors.PRIMARY} />
+              </View>
+              <Text style={styles.statLabel}>Sales</Text>
+              <Text style={styles.statValue}>{todayCount}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Quick Actions */}
+        <Text style={styles.sectionTitle}>Quick actions</Text>
+        <View style={styles.actionsGrid}>
+          {/* Primary: New Sale */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('POS')}>
+            <LinearGradient
+              colors={GRADIENT_COLORS}
+              locations={GRADIENT_LOCATIONS}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.primaryAction}>
+              <View style={styles.primaryCircle} />
+              <View style={styles.primaryIconBox}>
+                <PlusIcon color={colors.PRIMARY} />
+              </View>
+              <View>
+                <Text style={styles.primaryTitle}>New Sale</Text>
+                <Text style={styles.primarySubtitle}>Start selling</Text>
+              </View>
+              <View style={styles.primaryChevron}>
+                <Text style={styles.chevronText}>›</Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Action card pairs */}
+          {actionPairs.map((pair, pairIndex) => (
+            <View key={pairIndex} style={styles.actionsRow}>
+              {pair.map((item) => (
+                <TouchableOpacity
+                  key={item.screen}
+                  style={styles.actionCard}
+                  activeOpacity={0.85}
+                  onPress={() => navigation.navigate(item.screen)}>
+                  <View style={styles.actionChevron}>
+                    <Text style={styles.actionChevronText}>›</Text>
+                  </View>
+                  <View style={styles.actionIconBox}>
+                    {item.icon(colors.PRIMARY)}
+                  </View>
+                  <Text style={styles.actionTitle}>{item.title}</Text>
+                  <Text style={styles.actionSubtitle}>{item.subtitle}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           ))}
         </View>
 
+        {/* Low Stock Alert */}
         {lowStockItems.length > 0 && (
-          <View style={styles.lowStockSection}>
-            <View style={styles.lowStockHeader}>
-              <Text style={styles.lowStockHeaderText}>Low Stock Alerts</Text>
-              <View style={styles.lowStockBadge}>
-                <Text style={styles.lowStockBadgeText}>{lowStockItems.length}</Text>
+          <View style={styles.alertSection}>
+            <View style={styles.alertHeader}>
+              <View style={styles.alertIconBox}>
+                <WarningIcon color={colors.ERROR} />
               </View>
+              <Text style={styles.alertTitle}>Low stock alert</Text>
             </View>
-            <View style={styles.lowStockContainer}>
-              {lowStockItems.map((item, index) => (
+            {lowStockItems.map((item, index) => {
+              const barPercent = Math.min(
+                (item.stock / LOW_STOCK_THRESHOLD) * 100,
+                100,
+              );
+              return (
                 <TouchableOpacity
                   key={item.id}
                   style={[
-                    styles.lowStockRow,
-                    index === lowStockItems.length - 1 && styles.lowStockRowLast,
+                    styles.alertItem,
+                    index === 0 && styles.alertItemFirst,
                   ]}
                   onPress={() =>
                     navigation.navigate('ProductForm', { productId: item.id })
                   }>
-                  <View style={styles.lowStockDot}>
+                  <View style={styles.alertItemRow}>
+                    <Text style={styles.alertItemName} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    <Text style={styles.alertItemQty}>
+                      {item.stock} left
+                    </Text>
+                  </View>
+                  <View style={styles.alertBar}>
                     <View
                       style={[
-                        styles.lowStockDotInner,
-                        { backgroundColor: item.stock <= 0 ? colors.ERROR : colors.WARNING },
+                        styles.alertBarFill,
+                        { width: `${barPercent}%` },
                       ]}
                     />
                   </View>
-                  <Text style={styles.lowStockName} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <View
-                    style={[
-                      styles.lowStockQtyBadge,
-                      {
-                        backgroundColor:
-                          item.stock <= 0 ? colors.ERROR + '15' : colors.WARNING + '20',
-                      },
-                    ]}>
-                    <Text
-                      style={[
-                        styles.lowStockQty,
-                        item.stock <= 0 && styles.lowStockOut,
-                      ]}>
-                      {item.stock <= 0 ? 'OUT' : item.stock}
-                    </Text>
-                  </View>
                 </TouchableOpacity>
-              ))}
-            </View>
+              );
+            })}
           </View>
         )}
       </ScrollView>

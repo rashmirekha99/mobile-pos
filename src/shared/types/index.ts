@@ -41,6 +41,35 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface ServiceCartItem {
+  service: Service;
+  quantity: number;
+}
+
+export interface Service {
+  id: number;
+  name: string;
+  price: number;
+  created_at: string;
+}
+
+export interface ServiceSale {
+  id: number;
+  service_id: number;
+  amount: number;
+  created_at: string;
+}
+
+export interface ServiceSalesSummary {
+  totalRevenue: number;
+  totalTransactions: number;
+  items: Array<{
+    service_name: string;
+    total_count: number;
+    total_revenue: number;
+  }>;
+}
+
 export interface SalesSummary {
   totalSales: number;
   totalTransactions: number;

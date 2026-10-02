@@ -15,14 +15,14 @@ import useDailyReport from '../../hooks/useDailyReport';
 import { Supplier } from '../../../../shared/types';
 import { getDatabase } from '../../../../shared/db/database';
 import { getAllSuppliers } from '../../../suppliers/services/supplierService';
-import { formatCurrency, formatDate, formatDateTime, getTodayDateString } from '../../../../shared/utils/format';
+import { formatCurrency, formatDate, getTodayDateString } from '../../../../shared/utils/format';
 import { STORE_NAME } from '../../../../configs/Constants';
 
 const DailyReportScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { colors } = useTheme();
   const styles = GetDailyReportScreenStyles(colors);
-  const { date, summary, sales, isLoading, loadReport } = useDailyReport();
+  const { date, summary, isLoading, loadReport } = useDailyReport();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [filterSupplierId, setFilterSupplierId] = useState<number | null>(null);
 
@@ -184,7 +184,14 @@ const DailyReportScreen = () => {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Item-wise Breakdown</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Item-wise Breakdown</Text>
+          <TouchableOpacity
+            style={styles.viewTransactionsBtn}
+            onPress={() => navigation.navigate('SalesHistory')}>
+            <Text style={styles.viewTransactionsBtnText}>Transactions</Text>
+          </TouchableOpacity>
+        </View>
 
         <SupplierFilterDropdown
           suppliers={suppliers}
@@ -257,38 +264,6 @@ const DailyReportScreen = () => {
           <Text style={styles.emptyReport}>
             {isLoading ? 'Loading...' : 'No sales recorded for this day'}
           </Text>
-        )}
-
-        {sales.length > 0 && (
-          <>
-            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Transactions</Text>
-            <View style={styles.transactionsContainer}>
-              {sales.map((s, index) => (
-                <TouchableOpacity
-                  key={s.id}
-                  style={[
-                    styles.transactionRow,
-                    index === sales.length - 1 && styles.transactionRowLast,
-                  ]}
-                  onPress={() => navigation.navigate('Receipt', { saleId: s.id })}>
-                  <View style={styles.transactionInfo}>
-                    <Text style={styles.transactionId}>#{s.id}</Text>
-                    <Text style={styles.transactionTime}>
-                      {formatDateTime(s.created_at)}
-                    </Text>
-                  </View>
-                  <View style={styles.transactionRight}>
-                    <Text style={styles.transactionAmount}>
-                      {formatCurrency(s.total)}
-                    </Text>
-                    <Text style={styles.transactionItems}>
-                      {s.item_count} item{s.item_count !== 1 ? 's' : ''}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </>
         )}
 
       </ScrollView>

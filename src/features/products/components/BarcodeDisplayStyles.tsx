@@ -7,11 +7,13 @@ const GetBarcodeDisplayStyles = (colors: ThemeColors) => {
     container: {
       alignItems: 'center',
       justifyContent: 'center',
+      alignSelf: 'stretch',
       padding: 16,
       backgroundColor: '#FFFFFF',
       borderRadius: 12,
       borderWidth: 1,
       borderColor: colors.BORDER,
+      overflow: 'hidden',
     },
     barcodeValue: {
       marginTop: 6,

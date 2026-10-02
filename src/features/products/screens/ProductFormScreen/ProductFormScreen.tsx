@@ -11,9 +11,10 @@ import {
   FlatList,
   KeyboardAvoidingView,
   BackHandler,
+  StatusBar,
 } from 'react-native';
 import RNFS from 'react-native-fs';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useNavigation,
   useRoute,
@@ -23,9 +24,9 @@ import {
 } from '@react-navigation/native';
 import ViewShot from 'react-native-view-shot';
 import RNPrint from 'react-native-print';
+import LinearGradient from 'react-native-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
 import { RootStackParamList } from '../../../../shared/navigators/RootStackParamsList';
-import AppBar from '../../../../shared/components/AppBar';
-import MainButton from '../../../../shared/components/MainButton';
 import useTheme from '../../../../shared/theme/useTheme';
 import GetProductFormScreenStyles from './ProductFormScreenStyles';
 import BarcodeDisplay from '../../components/BarcodeDisplay';
@@ -41,15 +42,17 @@ import { getDatabase } from '../../../../shared/db/database';
 import { getAllSuppliers } from '../../../suppliers/services/supplierService';
 import { useSettingsStore } from '../../../../shared/store/settingsStore';
 import { getSetting } from '../../../../shared/services/settingsService';
-import { STORE_NAME } from '../../../../configs/Constants';
 import { formatCurrency } from '../../../../shared/utils/format';
 
+const GRADIENT_COLORS = ['#02078A', '#010450', '#01022E'];
+const GRADIENT_LOCATIONS = [0, 0.55, 1];
 const BARCODE_TYPES: BarcodeType[] = ['QR', 'EAN13', 'CODE128'];
 
 const ProductFormScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'ProductForm'>>();
   const productId = route.params?.productId;
+  const insets = useSafeAreaInsets();
 
   const { colors } = useTheme();
   const styles = GetProductFormScreenStyles(colors);
@@ -126,8 +129,17 @@ const ProductFormScreen = () => {
     }, []),
   );
 
+  // Calculate margin percentage
+  const bp = parseFloat(buyingPrice);
+  const sp = parseFloat(price);
+  let marginPercent: number | null = null;
+  let marginNegative = false;
+  if (bp > 0 && !isNaN(sp)) {
+    marginPercent = Math.round(((sp - bp) / bp) * 100);
+    marginNegative = marginPercent < 0;
+  }
+
   const applyMargin = () => {
-    const bp = parseFloat(buyingPrice);
     if (isNaN(bp) || bp <= 0) {
       Alert.alert('Margin', 'Please enter a valid buying price first');
       return;
@@ -146,6 +158,7 @@ const ProductFormScreen = () => {
   };
 
   const thermalConnected = usePrinterStore((s) => s.isConnected);
+  const paperWidth = usePrinterStore((s) => s.paperWidth);
 
   const captureBarcode = async (): Promise<string | null> => {
     try {
@@ -170,7 +183,7 @@ const ProductFormScreen = () => {
   };
 
   const handleThermalPrint = async (base64: string) => {
-    await printImageBase64(base64);
+    await printImageBase64(base64, paperWidth);
   };
 
   const handleSaveImage = async () => {
@@ -237,198 +250,334 @@ const ProductFormScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <AppBar title={isEditing ? 'Edit Product' : 'Add Product'} onBackPress={confirmGoBack} />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#02078A" />
+
+      {/* Hero header */}
+      <LinearGradient
+        colors={GRADIENT_COLORS}
+        locations={GRADIENT_LOCATIONS}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.heroContainer, { paddingTop: insets.top }]}>
+        <View style={styles.heroCircle1} />
+        <View style={styles.heroCircle2} />
+        <View style={styles.heroTop}>
+          <TouchableOpacity style={styles.backButton} onPress={confirmGoBack}>
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M19 12H5M12 19l-7-7 7-7"
+                stroke="#FFFFFF"
+                strokeWidth={2.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </TouchableOpacity>
+          <Text style={styles.heroTitle}>
+            {isEditing ? 'Edit Product' : 'Add Product'}
+          </Text>
+        </View>
+      </LinearGradient>
+
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled">
-        <Text style={styles.label}>Product Name *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter product name"
-          placeholderTextColor={colors.INPUT_PLACEHOLDER}
-          value={name}
-          onChangeText={setName}
-        />
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+          keyboardShouldPersistTaps="handled">
 
-        <Text style={styles.label}>Buying Price</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="0.00"
-          placeholderTextColor={colors.INPUT_PLACEHOLDER}
-          value={buyingPrice}
-          onChangeText={setBuyingPrice}
-          keyboardType="decimal-pad"
-        />
-
-        <View style={styles.labelRow}>
-          <Text style={[styles.label, {marginTop: 0, marginBottom: 0}]}>Selling Price *</Text>
-          <TouchableOpacity style={styles.marginButton} onPress={applyMargin}>
-            <Text style={styles.marginButtonText}>+{profitMargin}%</Text>
-          </TouchableOpacity>
-        </View>
-        <TextInput
-          style={styles.input}
-          placeholder="0.00"
-          placeholderTextColor={colors.INPUT_PLACEHOLDER}
-          value={price}
-          onChangeText={setPrice}
-          keyboardType="decimal-pad"
-        />
-
-        <Text style={styles.label}>Supplier</Text>
-        <TouchableOpacity
-          style={styles.dropdownButton}
-          onPress={() => setShowSupplierPicker(true)}>
-          <Text
-            style={[
-              styles.dropdownButtonText,
-              !selectedSupplier && styles.dropdownPlaceholder,
-            ]}>
-            {selectedSupplier ? selectedSupplier.name : 'Select supplier (optional)'}
-          </Text>
-          <Text style={styles.dropdownArrow}>▼</Text>
-        </TouchableOpacity>
-
-        <Modal
-          visible={showSupplierPicker}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowSupplierPicker(false)}>
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setShowSupplierPicker(false)}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Select Supplier</Text>
-              <TouchableOpacity
-                style={styles.modalOption}
-                onPress={() => {
-                  setSupplierId(null);
-                  setShowSupplierPicker(false);
-                }}>
-                <Text style={styles.modalOptionText}>None</Text>
-              </TouchableOpacity>
-              <FlatList
-                data={suppliers}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[
-                      styles.modalOption,
-                      supplierId === item.id && styles.modalOptionActive,
-                    ]}
-                    onPress={() => {
-                      setSupplierId(item.id);
-                      setShowSupplierPicker(false);
-                    }}>
-                    <Text
-                      style={[
-                        styles.modalOptionText,
-                        supplierId === item.id && styles.modalOptionTextActive,
-                      ]}>
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                )}
+          {/* Basic Info */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Basic Info</Text>
+            <View>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>
+                  Product Name<Text style={styles.required}>*</Text>
+                </Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter product name"
+                placeholderTextColor="#a9acc9"
+                value={name}
+                onChangeText={setName}
               />
             </View>
-          </TouchableOpacity>
-        </Modal>
+          </View>
 
-        <Text style={styles.label}>SKU</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter SKU (optional)"
-          placeholderTextColor={colors.INPUT_PLACEHOLDER}
-          value={sku}
-          onChangeText={setSku}
-        />
-
-        <Text style={styles.label}>Stock Quantity</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="0"
-          placeholderTextColor={colors.INPUT_PLACEHOLDER}
-          value={stock}
-          onChangeText={setStock}
-          keyboardType="number-pad"
-        />
-
-        <Text style={styles.label}>Barcode Type</Text>
-        <View style={styles.pickerRow}>
-          {BARCODE_TYPES.map((type) => (
-            <TouchableOpacity
-              key={type}
-              style={[
-                styles.pickerOption,
-                barcodeType === type && styles.pickerOptionActive,
-              ]}
-              onPress={() => setBarcodeType(type)}>
-              <Text
-                style={[
-                  styles.pickerText,
-                  barcodeType === type && styles.pickerTextActive,
-                ]}>
-                {type}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={styles.label}>Barcode Value</Text>
-        <View style={styles.barcodeRow}>
-          <TextInput
-            style={styles.barcodeInput}
-            placeholder="Enter or auto-generate"
-            placeholderTextColor={colors.INPUT_PLACEHOLDER}
-            value={barcode}
-            onChangeText={setBarcode}
-          />
-          <TouchableOpacity
-            style={styles.autoButton}
-            onPress={handleAutoGenerate}>
-            <Text style={styles.autoButtonText}>Auto</Text>
-          </TouchableOpacity>
-        </View>
-
-        {barcode.trim().length > 0 && (
-          <View style={styles.previewContainer}>
-            <Text style={styles.previewLabel}>Preview</Text>
-            <ViewShot
-              ref={barcodeRef}
-              options={{ format: 'png', quality: 1.0, result: 'tmpfile', pixelRatio: 4 }}>
-              <BarcodeDisplay value={barcode} type={barcodeType} label={name || undefined} price={price} />
-            </ViewShot>
-            <View style={styles.barcodeActionsRow}>
-              <TouchableOpacity
-                style={styles.printButton}
-                onPress={handlePrint}>
-                <Text style={styles.printButtonText}>Print Barcode</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.saveImageButton}
-                onPress={handleSaveImage}>
-                <Text style={styles.saveImageButtonText}>Save Image</Text>
-              </TouchableOpacity>
+          {/* Pricing */}
+          <View style={[styles.card, styles.cardSecondary]}>
+            <Text style={styles.cardTitle}>Pricing</Text>
+            <View>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Buying Price</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="0"
+                placeholderTextColor="#a9acc9"
+                value={buyingPrice}
+                onChangeText={setBuyingPrice}
+                keyboardType="decimal-pad"
+              />
+            </View>
+            <View>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>
+                  Selling Price<Text style={styles.required}>*</Text>
+                </Text>
+                {marginPercent !== null ? (
+                  <TouchableOpacity onPress={applyMargin}>
+                    <LinearGradient
+                      colors={marginNegative ? ['#e5484d', '#e5484d'] : GRADIENT_COLORS}
+                      locations={marginNegative ? [0, 1] : GRADIENT_LOCATIONS}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.marginBadge}>
+                      <Text style={styles.marginBadgeText}>
+                        {marginPercent >= 0 ? '+' : ''}{marginPercent}%
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={applyMargin}>
+                    <LinearGradient
+                      colors={GRADIENT_COLORS}
+                      locations={GRADIENT_LOCATIONS}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.marginBadge}>
+                      <Text style={styles.marginBadgeText}>+{profitMargin}%</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="0"
+                placeholderTextColor="#a9acc9"
+                value={price}
+                onChangeText={setPrice}
+                keyboardType="decimal-pad"
+              />
             </View>
           </View>
-        )}
 
-        <View style={styles.saveButton}>
-          <MainButton
-            title={isLoading ? 'Saving...' : isEditing ? 'Update' : 'Save'}
+          {/* Details */}
+          <View style={[styles.card, styles.cardSecondary]}>
+            <Text style={styles.cardTitle}>Details</Text>
+            <View>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Supplier</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => setShowSupplierPicker(true)}>
+                <Text
+                  style={[
+                    styles.dropdownButtonText,
+                    !selectedSupplier && styles.dropdownPlaceholder,
+                  ]}>
+                  {selectedSupplier ? selectedSupplier.name : 'Select supplier (optional)'}
+                </Text>
+                <View style={styles.dropdownArrow} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.twoColumns}>
+              <View style={styles.columnItem}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.label}>SKU</Text>
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Optional"
+                  placeholderTextColor="#a9acc9"
+                  value={sku}
+                  onChangeText={setSku}
+                />
+              </View>
+              <View style={styles.columnItem}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.label}>Stock Quantity</Text>
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="0"
+                  placeholderTextColor="#a9acc9"
+                  value={stock}
+                  onChangeText={setStock}
+                  keyboardType="number-pad"
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* Barcode */}
+          <View style={[styles.card, styles.cardSecondary]}>
+            <Text style={styles.cardTitle}>Barcode</Text>
+            <View>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Barcode Type</Text>
+              </View>
+              <View style={styles.barcodeTypeRow}>
+                {BARCODE_TYPES.map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[
+                      styles.barcodeTypeOption,
+                      barcodeType === type && styles.barcodeTypeOptionActive,
+                    ]}
+                    onPress={() => setBarcodeType(type)}>
+                    <Text
+                      style={[
+                        styles.barcodeTypeText,
+                        barcodeType === type && styles.barcodeTypeTextActive,
+                      ]}>
+                      {type}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            <View>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Barcode Value</Text>
+              </View>
+              <View style={styles.barcodeValueRow}>
+                <TextInput
+                  style={styles.barcodeInput}
+                  placeholder="Enter or auto-generate"
+                  placeholderTextColor="#a9acc9"
+                  value={barcode}
+                  onChangeText={setBarcode}
+                />
+                <TouchableOpacity
+                  style={styles.autoButton}
+                  onPress={handleAutoGenerate}
+                  activeOpacity={0.85}>
+                  <LinearGradient
+                    colors={GRADIENT_COLORS}
+                    locations={GRADIENT_LOCATIONS}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      borderRadius: 14,
+                    }}
+                  />
+                  <Text style={styles.autoButtonText}>Auto</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {barcode.trim().length > 0 && (
+              <View style={styles.previewContainer}>
+                <Text style={styles.previewLabel}>Preview</Text>
+                <ViewShot
+                  ref={barcodeRef}
+                  options={{ format: 'png', quality: 1.0, result: 'tmpfile', pixelRatio: 8 }}>
+                  <BarcodeDisplay value={barcode} type={barcodeType} label={name || undefined} price={price} />
+                </ViewShot>
+                <View style={styles.barcodeActionsRow}>
+                  <TouchableOpacity style={styles.printButton} onPress={handlePrint}>
+                    <Text style={styles.printButtonText}>Print Barcode</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.saveImageButton} onPress={handleSaveImage} activeOpacity={0.85}>
+                    <LinearGradient
+                      colors={GRADIENT_COLORS}
+                      locations={GRADIENT_LOCATIONS}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 12 }}
+                    />
+                    <Text style={styles.saveImageButtonText}>Save Image</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Save button */}
+          <TouchableOpacity
+            style={styles.saveButton}
             onPress={onSave}
             disabled={isLoading}
-          />
-        </View>
-      </ScrollView>
+            activeOpacity={0.85}>
+            <LinearGradient
+              colors={GRADIENT_COLORS}
+              locations={GRADIENT_LOCATIONS}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                borderRadius: 18,
+              }}
+            />
+            <Text style={styles.saveButtonText}>
+              {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Save'}
+            </Text>
+          </TouchableOpacity>
+
+        </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+
+      {/* Supplier picker modal */}
+      <Modal
+        visible={showSupplierPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSupplierPicker(false)}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSupplierPicker(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Supplier</Text>
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => {
+                setSupplierId(null);
+                setShowSupplierPicker(false);
+              }}>
+              <Text style={styles.modalOptionText}>None</Text>
+            </TouchableOpacity>
+            <FlatList
+              data={suppliers}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.modalOption,
+                    supplierId === item.id && styles.modalOptionActive,
+                  ]}
+                  onPress={() => {
+                    setSupplierId(item.id);
+                    setShowSupplierPicker(false);
+                  }}>
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      supplierId === item.id && styles.modalOptionTextActive,
+                    ]}>
+                    {item.name}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
   );
 };
 

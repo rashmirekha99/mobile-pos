@@ -6,40 +6,41 @@ import LinearGradient from 'react-native-linear-gradient';
 import { RootStackParamList } from '../../../../shared/navigators/RootStackParamsList';
 import AppBar from '../../../../shared/components/AppBar';
 import useTheme from '../../../../shared/theme/useTheme';
-import GetSupplierListScreenStyles from './SupplierListScreenStyles';
-import { Supplier } from '../../../../shared/types';
+import GetServiceListScreenStyles from './ServiceListScreenStyles';
+import { Service } from '../../../../shared/types';
 import { getDatabase } from '../../../../shared/db/database';
-import { getAllSuppliers, deleteSupplier } from '../../services/supplierService';
+import { getAllServices, deleteService } from '../../services/serviceService';
+import { formatCurrency } from '../../../../shared/utils/format';
 
 const GRADIENT_COLORS = ['#02078A', '#010450', '#01022E'];
 const GRADIENT_LOCATIONS = [0, 0.55, 1];
 
-const SupplierListScreen = () => {
+const ServiceListScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { colors } = useTheme();
-  const styles = GetSupplierListScreenStyles(colors);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const styles = GetServiceListScreenStyles(colors);
+  const [services, setServices] = useState<Service[]>([]);
 
-  const loadSuppliers = useCallback(async () => {
+  const loadServices = useCallback(async () => {
     try {
       const db = await getDatabase();
-      const data = await getAllSuppliers(db);
-      setSuppliers(data);
+      const data = await getAllServices(db);
+      setServices(data);
     } catch (error) {
-      console.error('Failed to load suppliers:', error);
+      console.error('Failed to load services:', error);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadSuppliers();
-    }, [loadSuppliers]),
+      loadServices();
+    }, [loadServices]),
   );
 
-  const handleDelete = (supplier: Supplier) => {
+  const handleDelete = (service: Service) => {
     Alert.alert(
-      'Delete Supplier',
-      `Are you sure you want to delete "${supplier.name}"? Products linked to this supplier will be unlinked.`,
+      'Delete Service',
+      `Are you sure you want to delete "${service.name}"? All related sales records will also be deleted.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -48,10 +49,10 @@ const SupplierListScreen = () => {
           onPress: async () => {
             try {
               const db = await getDatabase();
-              await deleteSupplier(db, supplier.id);
-              loadSuppliers();
+              await deleteService(db, service.id);
+              loadServices();
             } catch {
-              Alert.alert('Error', 'Failed to delete supplier');
+              Alert.alert('Error', 'Failed to delete service');
             }
           },
         },
@@ -59,16 +60,16 @@ const SupplierListScreen = () => {
     );
   };
 
-  const renderItem = ({ item }: { item: Supplier }) => (
-    <View style={styles.supplierCard}>
-      <Text style={styles.supplierName}>{item.name}</Text>
-      {item.phone && <Text style={styles.supplierDetail}>{item.phone}</Text>}
-      {item.email && <Text style={styles.supplierDetail}>{item.email}</Text>}
-      {item.address && <Text style={styles.supplierDetail}>{item.address}</Text>}
+  const renderItem = ({ item }: { item: Service }) => (
+    <View style={styles.serviceCard}>
+      <View style={styles.serviceInfo}>
+        <Text style={styles.serviceName}>{item.name}</Text>
+        <Text style={styles.servicePrice}>{formatCurrency(item.price)}</Text>
+      </View>
       <View style={styles.actions}>
         <TouchableOpacity
           style={styles.editButton}
-          onPress={() => navigation.navigate('SupplierForm', { supplierId: item.id })}>
+          onPress={() => navigation.navigate('ServiceForm', { serviceId: item.id })}>
           <LinearGradient
             colors={GRADIENT_COLORS}
             locations={GRADIENT_LOCATIONS}
@@ -89,14 +90,14 @@ const SupplierListScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <AppBar title="Suppliers" />
-      {suppliers.length === 0 ? (
+      <AppBar title="Services" />
+      {services.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No suppliers added yet</Text>
+          <Text style={styles.emptyText}>No services added yet</Text>
         </View>
       ) : (
         <FlatList
-          data={suppliers}
+          data={services}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
@@ -105,7 +106,7 @@ const SupplierListScreen = () => {
       <TouchableOpacity
         style={styles.fab}
         activeOpacity={0.85}
-        onPress={() => navigation.navigate('SupplierForm')}>
+        onPress={() => navigation.navigate('ServiceForm')}>
         <LinearGradient
           colors={GRADIENT_COLORS}
           locations={GRADIENT_LOCATIONS}
@@ -119,4 +120,4 @@ const SupplierListScreen = () => {
   );
 };
 
-export default SupplierListScreen;
+export default ServiceListScreen;

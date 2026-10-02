@@ -2,18 +2,23 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import useTheme from '../../../shared/theme/useTheme';
 import GetCartItemRowStyles from './CartItemRowStyles';
-import { CartItem } from '../../../shared/types';
 import { formatCurrency } from '../../../shared/utils/format';
 
 interface CartItemRowProps {
-  item: CartItem;
+  name: string;
+  price: number;
+  quantity: number;
+  isService?: boolean;
   onIncrement: () => void;
   onDecrement: () => void;
   onRemove: () => void;
 }
 
 const CartItemRow = ({
-  item,
+  name,
+  price,
+  quantity,
+  isService,
   onIncrement,
   onDecrement,
   onRemove,
@@ -21,21 +26,21 @@ const CartItemRow = ({
   const { colors } = useTheme();
   const styles = GetCartItemRowStyles(colors);
 
-  const subtotal = item.product.price * item.quantity;
+  const subtotal = price * quantity;
 
   return (
     <View style={styles.container}>
       <View style={styles.infoContainer}>
         <Text style={styles.name} numberOfLines={1}>
-          {item.product.name}
+          {isService ? `[S] ${name}` : name}
         </Text>
-        <Text style={styles.price}>{formatCurrency(item.product.price)}</Text>
+        <Text style={styles.price}>{formatCurrency(price)}</Text>
       </View>
       <View style={styles.quantityContainer}>
         <TouchableOpacity style={styles.qtyButton} onPress={onDecrement}>
           <Text style={styles.qtyButtonText}>-</Text>
         </TouchableOpacity>
-        <Text style={styles.quantity}>{item.quantity}</Text>
+        <Text style={styles.quantity}>{quantity}</Text>
         <TouchableOpacity style={styles.qtyButton} onPress={onIncrement}>
           <Text style={styles.qtyButtonText}>+</Text>
         </TouchableOpacity>

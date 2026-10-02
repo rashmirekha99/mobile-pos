@@ -22,8 +22,11 @@ import { getDatabase } from '../../../../shared/db/database';
 import {
   getSaleById,
   getSaleItems,
+  getSaleServiceItems,
   removeSaleItem,
+  removeSaleServiceItem,
   deleteSale,
+  SaleServiceItem,
 } from '../../services/salesService';
 import { STORE_NAME } from '../../../../configs/Constants';
 import { formatCurrency, formatDateTime } from '../../../../shared/utils/format';
@@ -47,6 +50,9 @@ const ReceiptScreen = () => {
   const [items, setItems] = useState<Array<SaleItem & { product_name: string }>>(
     [],
   );
+  const [svcItems, setSvcItems] = useState<Array<SaleServiceItem & { service_name: string }>>(
+    [],
+  );
   const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
@@ -56,12 +62,16 @@ const ReceiptScreen = () => {
   const loadReceipt = async () => {
     try {
       const db = await getDatabase();
-      const saleData = await getSaleById(db, saleId);
-      const saleItems = await getSaleItems(db, saleId);
+      const [saleData, saleItems, saleServiceItems] = await Promise.all([
+        getSaleById(db, saleId),
+        getSaleItems(db, saleId),
+        getSaleServiceItems(db, saleId),
+      ]);
       if (saleData) {
         setSale(saleData);
       }
       setItems(saleItems);
+      setSvcItems(saleServiceItems);
     } catch (error) {
       console.error('Failed to load receipt:', error);
     }
@@ -89,6 +99,36 @@ const ReceiptScreen = () => {
               }
             } catch (error) {
               console.error('Failed to remove item:', error);
+              Alert.alert('Error', 'Failed to remove item');
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleRemoveServiceItem = (item: SaleServiceItem & { service_name: string }) => {
+    Alert.alert(
+      'Remove Service',
+      `Remove "${item.service_name}" (x${item.quantity}) from this sale?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await getDatabase();
+              const saleStillExists = await removeSaleServiceItem(db, saleId, item.id);
+              if (!saleStillExists) {
+                Alert.alert('Sale Deleted', 'All items removed. Sale has been deleted.', [
+                  { text: 'OK', onPress: () => navigation.navigate('Dashboard') },
+                ]);
+              } else {
+                await loadReceipt();
+              }
+            } catch (error) {
+              console.error('Failed to remove service item:', error);
               Alert.alert('Error', 'Failed to remove item');
             }
           },
@@ -141,19 +181,26 @@ const ReceiptScreen = () => {
   };
 
   const thermalConnected = usePrinterStore((s) => s.isConnected);
+  const paperWidth = usePrinterStore((s) => s.paperWidth);
 
   const handleNormalPrint = async () => {
     if (!sale) return;
-    const itemsHtml = items
-      .map(
+    const allItemsHtml = [
+      ...items.map(
         (item) => `
         <tr>
           <td style="padding:6px 0;">${item.product_name}</td>
           <td style="text-align:center;">${item.quantity}</td>
           <td style="text-align:right;">${formatCurrency(item.subtotal)}</td>
-        </tr>`,
-      )
-      .join('');
+        </tr>`),
+      ...svcItems.map(
+        (item) => `
+        <tr>
+          <td style="padding:6px 0;">${item.service_name}</td>
+          <td style="text-align:center;">${item.quantity}</td>
+          <td style="text-align:right;">${formatCurrency(item.subtotal)}</td>
+        </tr>`),
+    ].join('');
 
     await RNPrint.print({
       html: `
@@ -170,7 +217,7 @@ const ReceiptScreen = () => {
               <th style="text-align:center; font-size:12px;">Qty</th>
               <th style="text-align:right; font-size:12px;">Subtotal</th>
             </tr>
-            ${itemsHtml}
+            ${allItemsHtml}
           </table>
           <hr style="border:none; border-top:1px dashed #ccc;" />
           ${sale.discount > 0 ? `
@@ -201,7 +248,7 @@ const ReceiptScreen = () => {
       if (!viewShotRef.current?.capture) return;
       const uri = await viewShotRef.current.capture();
       const base64 = await RNFS.readFile(uri, 'base64');
-      await printImageBase64(base64);
+      await printImageBase64(base64, paperWidth);
     } catch {
       Alert.alert('Print Error', 'Failed to print to thermal printer');
     }
@@ -278,7 +325,7 @@ const ReceiptScreen = () => {
           <ViewShot
             ref={viewShotRef}
             options={{ format: 'png', quality: 1.0 }}>
-            <ReceiptView sale={sale} items={items} />
+            <ReceiptView sale={sale} items={items} serviceItems={svcItems} />
           </ViewShot>
         ) : (
           <View style={styles.editContainer}>
@@ -287,7 +334,7 @@ const ReceiptScreen = () => {
               Tap the X button to remove an item. Stock will be restored.
             </Text>
             {items.map((item) => (
-              <View key={item.id} style={styles.editItemRow}>
+              <View key={`p-${item.id}`} style={styles.editItemRow}>
                 <View style={styles.editItemInfo}>
                   <Text style={styles.editItemName} numberOfLines={1}>
                     {item.product_name}
@@ -299,6 +346,23 @@ const ReceiptScreen = () => {
                 <TouchableOpacity
                   style={styles.removeItemButton}
                   onPress={() => handleRemoveItem(item)}>
+                  <Text style={styles.removeItemButtonText}>X</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+            {svcItems.map((item) => (
+              <View key={`s-${item.id}`} style={styles.editItemRow}>
+                <View style={styles.editItemInfo}>
+                  <Text style={styles.editItemName} numberOfLines={1}>
+                    {item.service_name}
+                  </Text>
+                  <Text style={styles.editItemDetail}>
+                    x{item.quantity} - {formatCurrency(item.subtotal)}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.removeItemButton}
+                  onPress={() => handleRemoveServiceItem(item)}>
                   <Text style={styles.removeItemButtonText}>X</Text>
                 </TouchableOpacity>
               </View>

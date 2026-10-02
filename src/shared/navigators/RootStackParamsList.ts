@@ -10,4 +10,9 @@ export type RootStackParamList = {
   SupplierList: undefined;
   SupplierForm: { supplierId?: number } | undefined;
   GeneralSettings: undefined;
+  ServiceList: undefined;
+  ServiceForm: { serviceId?: number } | undefined;
+  ServiceReport: undefined;
+  SalesHistory: undefined;
+  ServiceSalesHistory: undefined;
 };

@@ -6,8 +6,21 @@ import { getProductByBarcode } from '../../products/services/productService';
 import { createSale } from '../services/salesService';
 
 const useCart = () => {
-  const { items, addItem, removeItem, increment, decrement, clear, getTotal } =
-    useCartStore();
+  const {
+    items,
+    serviceItems,
+    addItem,
+    removeItem,
+    increment,
+    decrement,
+    addService,
+    removeService,
+    incrementService,
+    decrementService,
+    clear,
+    getTotal,
+    getTotalItemCount,
+  } = useCartStore();
 
   const handleBarcodeScan = useCallback(
     async (barcode: string) => {
@@ -30,14 +43,14 @@ const useCart = () => {
   );
 
   const handleCheckout = useCallback(async (discount: number = 0): Promise<number | null> => {
-    if (items.length === 0) {
+    if (items.length === 0 && serviceItems.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to the cart first');
       return null;
     }
 
     try {
       const db = await getDatabase();
-      const saleId = await createSale(db, items, discount);
+      const saleId = await createSale(db, items, serviceItems, discount);
       clear();
       return saleId;
     } catch (error) {
@@ -45,16 +58,22 @@ const useCart = () => {
       Alert.alert('Error', 'Failed to complete checkout');
       return null;
     }
-  }, [items, clear]);
+  }, [items, serviceItems, clear]);
 
   return {
     items,
+    serviceItems,
     addItem,
     removeItem,
     increment,
     decrement,
+    addService,
+    removeService,
+    incrementService,
+    decrementService,
     clear,
     total: getTotal(),
+    totalItemCount: getTotalItemCount(),
     handleBarcodeScan,
     handleCheckout,
   };

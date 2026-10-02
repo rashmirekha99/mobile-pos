@@ -13,9 +13,17 @@ const GetMainButtonStyles = (colors: ThemeColors) => {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: colors.PRIMARY,
       borderRadius: 12,
       paddingHorizontal: 24,
+      overflow: 'hidden',
+    },
+    gradient: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderRadius: 12,
     },
     buttonDisabled: {
       backgroundColor: colors.TEXT_TERTIARY,

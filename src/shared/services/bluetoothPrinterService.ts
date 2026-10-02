@@ -66,9 +66,9 @@ export const disconnectPrinter = async (): Promise<void> => {
   connected = false;
 };
 
-export const printImageBase64 = async (base64: string): Promise<void> => {
+export const printImageBase64 = async (base64: string, paperWidth: 58 | 80 = 58): Promise<void> => {
   await BLEPrinter.printImageBase64(base64, {
-    imageWidth: 380,
+    imageWidth: paperWidth === 80 ? 560 : 380,
   });
 };
 

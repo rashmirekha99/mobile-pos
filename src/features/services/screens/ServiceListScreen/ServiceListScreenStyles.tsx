@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 import { ThemeColors } from '../../../../shared/theme/types';
 import { fonts } from '../../../../shared/theme';
 
-const GetSupplierListScreenStyles = (colors: ThemeColors) => {
+const GetServiceListScreenStyles = (colors: ThemeColors) => {
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -12,7 +12,7 @@ const GetSupplierListScreenStyles = (colors: ThemeColors) => {
       padding: 16,
       paddingBottom: 100,
     },
-    supplierCard: {
+    serviceCard: {
       backgroundColor: colors.CARD_BACKGROUND,
       borderRadius: 14,
       padding: 16,
@@ -23,16 +23,21 @@ const GetSupplierListScreenStyles = (colors: ThemeColors) => {
       shadowRadius: 6,
       elevation: 2,
     },
-    supplierName: {
+    serviceInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    serviceName: {
       fontSize: fonts.FONT_SIZE_16,
       fontWeight: '600',
       color: colors.TEXT_PRIMARY,
-      marginBottom: 4,
+      flex: 1,
     },
-    supplierDetail: {
-      fontSize: fonts.FONT_SIZE_13,
-      color: colors.TEXT_SECONDARY,
-      marginTop: 2,
+    servicePrice: {
+      fontSize: fonts.FONT_SIZE_16,
+      fontWeight: '700',
+      color: colors.PRIMARY,
     },
     emptyContainer: {
       flex: 1,
@@ -114,4 +119,4 @@ const GetSupplierListScreenStyles = (colors: ThemeColors) => {
   });
 };
 
-export default GetSupplierListScreenStyles;
+export default GetServiceListScreenStyles;

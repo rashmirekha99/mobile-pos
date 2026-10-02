@@ -1,16 +1,30 @@
 import { SQLiteDatabase } from 'react-native-sqlite-storage';
-import { CartItem, Sale, SaleItem } from '../../../shared/types';
+import { CartItem, Sale, SaleItem, ServiceCartItem } from '../../../shared/types';
+
+export interface SaleServiceItem {
+  id: number;
+  sale_id: number;
+  service_id: number;
+  quantity: number;
+  price: number;
+  subtotal: number;
+}
 
 export const createSale = async (
   db: SQLiteDatabase,
   items: CartItem[],
+  serviceItems: ServiceCartItem[] = [],
   discount: number = 0,
 ): Promise<number> => {
-  const subtotal = items.reduce(
+  const productSubtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0,
   );
-  const total = Math.max(subtotal - discount, 0);
+  const serviceSubtotal = serviceItems.reduce(
+    (sum, item) => sum + item.service.price * item.quantity,
+    0,
+  );
+  const total = Math.max(productSubtotal + serviceSubtotal - discount, 0);
 
   const [saleResult] = await db.executeSql(
     'INSERT INTO sales (total, discount) VALUES (?, ?)',
@@ -29,6 +43,14 @@ export const createSale = async (
     await db.executeSql(
       'UPDATE products SET stock = stock - ? WHERE id = ?',
       [item.quantity, item.product.id],
+    );
+  }
+
+  for (const item of serviceItems) {
+    const subtotal = item.service.price * item.quantity;
+    await db.executeSql(
+      'INSERT INTO sale_service_items (sale_id, service_id, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?)',
+      [saleId, item.service.id, item.quantity, item.service.price, subtotal],
     );
   }
 
@@ -67,12 +89,29 @@ export const getSaleItems = async (
   return items;
 };
 
+export const getSaleServiceItems = async (
+  db: SQLiteDatabase,
+  saleId: number,
+): Promise<Array<SaleServiceItem & { service_name: string }>> => {
+  const [results] = await db.executeSql(
+    `SELECT ssi.*, s.name as service_name
+     FROM sale_service_items ssi
+     JOIN services s ON ssi.service_id = s.id
+     WHERE ssi.sale_id = ?`,
+    [saleId],
+  );
+  const items: Array<SaleServiceItem & { service_name: string }> = [];
+  for (let i = 0; i < results.rows.length; i++) {
+    items.push(results.rows.item(i));
+  }
+  return items;
+};
+
 export const removeSaleItem = async (
   db: SQLiteDatabase,
   saleId: number,
   saleItemId: number,
 ): Promise<boolean> => {
-  // Get the item details before removing
   const [itemResult] = await db.executeSql(
     'SELECT * FROM sale_items WHERE id = ? AND sale_id = ?',
     [saleItemId, saleId],
@@ -90,17 +129,35 @@ export const removeSaleItem = async (
   // Remove the item
   await db.executeSql('DELETE FROM sale_items WHERE id = ?', [saleItemId]);
 
-  // Update sale total
-  const [totalResult] = await db.executeSql(
-    'SELECT COALESCE(SUM(subtotal), 0) as new_total FROM sale_items WHERE sale_id = ?',
+  return await recalcSaleTotal(db, saleId);
+};
+
+export const removeSaleServiceItem = async (
+  db: SQLiteDatabase,
+  saleId: number,
+  saleServiceItemId: number,
+): Promise<boolean> => {
+  await db.executeSql('DELETE FROM sale_service_items WHERE id = ? AND sale_id = ?', [saleServiceItemId, saleId]);
+  return await recalcSaleTotal(db, saleId);
+};
+
+const recalcSaleTotal = async (
+  db: SQLiteDatabase,
+  saleId: number,
+): Promise<boolean> => {
+  const [productTotal] = await db.executeSql(
+    'SELECT COALESCE(SUM(subtotal), 0) as total FROM sale_items WHERE sale_id = ?',
     [saleId],
   );
-  const newTotal = totalResult.rows.item(0).new_total;
+  const [serviceTotal] = await db.executeSql(
+    'SELECT COALESCE(SUM(subtotal), 0) as total FROM sale_service_items WHERE sale_id = ?',
+    [saleId],
+  );
+  const newTotal = productTotal.rows.item(0).total + serviceTotal.rows.item(0).total;
 
   if (newTotal === 0) {
-    // No items left, delete the sale
     await db.executeSql('DELETE FROM sales WHERE id = ?', [saleId]);
-    return false; // indicates sale was deleted
+    return false; // sale deleted
   }
 
   await db.executeSql('UPDATE sales SET total = ? WHERE id = ?', [newTotal, saleId]);
@@ -111,7 +168,7 @@ export const deleteSale = async (
   db: SQLiteDatabase,
   saleId: number,
 ): Promise<void> => {
-  // Restore stock for all items
+  // Restore stock for product items
   const [itemsResult] = await db.executeSql(
     'SELECT product_id, quantity FROM sale_items WHERE sale_id = ?',
     [saleId],
@@ -124,8 +181,9 @@ export const deleteSale = async (
     );
   }
 
-  // Delete items then sale
+  // Delete all items then sale
   await db.executeSql('DELETE FROM sale_items WHERE sale_id = ?', [saleId]);
+  await db.executeSql('DELETE FROM sale_service_items WHERE sale_id = ?', [saleId]);
   await db.executeSql('DELETE FROM sales WHERE id = ?', [saleId]);
 };
 
@@ -134,11 +192,11 @@ export const getSalesByDate = async (
   date: string,
 ): Promise<Array<Sale & { item_count: number }>> => {
   const [results] = await db.executeSql(
-    `SELECT s.*, COUNT(si.id) as item_count
+    `SELECT s.*,
+       (SELECT COUNT(*) FROM sale_items WHERE sale_id = s.id) +
+       (SELECT COUNT(*) FROM sale_service_items WHERE sale_id = s.id) as item_count
      FROM sales s
-     LEFT JOIN sale_items si ON si.sale_id = s.id
      WHERE date(s.created_at) = ?
-     GROUP BY s.id
      ORDER BY s.created_at DESC`,
     [date],
   );

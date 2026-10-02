@@ -13,6 +13,11 @@ import PrinterSettingsScreen from '../../features/settings/screens/PrinterSettin
 import SupplierListScreen from '../../features/suppliers/screens/SupplierListScreen/SupplierListScreen';
 import SupplierFormScreen from '../../features/suppliers/screens/SupplierFormScreen/SupplierFormScreen';
 import GeneralSettingsScreen from '../../features/settings/screens/GeneralSettingsScreen/GeneralSettingsScreen';
+import ServiceListScreen from '../../features/services/screens/ServiceListScreen/ServiceListScreen';
+import ServiceFormScreen from '../../features/services/screens/ServiceFormScreen/ServiceFormScreen';
+import ServiceReportScreen from '../../features/services/screens/ServiceReportScreen/ServiceReportScreen';
+import SalesHistoryScreen from '../../features/reports/screens/SalesHistoryScreen/SalesHistoryScreen';
+import ServiceSalesHistoryScreen from '../../features/services/screens/ServiceSalesHistoryScreen/ServiceSalesHistoryScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -36,6 +41,11 @@ const RootStackNavigator = () => {
         <Stack.Screen name="SupplierList" component={SupplierListScreen} />
         <Stack.Screen name="SupplierForm" component={SupplierFormScreen} />
         <Stack.Screen name="GeneralSettings" component={GeneralSettingsScreen} />
+        <Stack.Screen name="ServiceList" component={ServiceListScreen} />
+        <Stack.Screen name="ServiceForm" component={ServiceFormScreen} />
+        <Stack.Screen name="ServiceReport" component={ServiceReportScreen} />
+        <Stack.Screen name="SalesHistory" component={SalesHistoryScreen} />
+        <Stack.Screen name="ServiceSalesHistory" component={ServiceSalesHistoryScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

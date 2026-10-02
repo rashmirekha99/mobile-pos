@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 import { ThemeColors } from '../../../../shared/theme/types';
 import { fonts } from '../../../../shared/theme';
 
-const GetDailyReportScreenStyles = (colors: ThemeColors) => {
+const GetServiceReportScreenStyles = (colors: ThemeColors) => {
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -54,10 +54,27 @@ const GetDailyReportScreenStyles = (colors: ThemeColors) => {
       marginTop: 4,
       fontWeight: '500',
     },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
     sectionTitle: {
       fontSize: fonts.FONT_SIZE_18,
       fontWeight: '700',
       color: colors.TEXT_PRIMARY,
+    },
+    viewTransactionsBtn: {
+      backgroundColor: colors.PRIMARY_LIGHT,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 10,
+    },
+    viewTransactionsBtnText: {
+      fontSize: fonts.FONT_SIZE_12,
+      fontWeight: '700',
+      color: colors.PRIMARY,
     },
     tableContainer: {
       backgroundColor: colors.CARD_BACKGROUND,
@@ -68,7 +85,6 @@ const GetDailyReportScreenStyles = (colors: ThemeColors) => {
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 2,
-      minWidth: '100%',
     },
     tableHeader: {
       flexDirection: 'row',
@@ -92,43 +108,25 @@ const GetDailyReportScreenStyles = (colors: ThemeColors) => {
       backgroundColor: colors.REPORT_ROW_ALT,
     },
     tableCell: {
-      fontSize: fonts.FONT_SIZE_12,
+      fontSize: fonts.FONT_SIZE_14,
       color: colors.TEXT_PRIMARY,
     },
     tableCellBold: {
-      fontSize: fonts.FONT_SIZE_12,
+      fontSize: fonts.FONT_SIZE_14,
       fontWeight: '600',
       color: colors.TEXT_PRIMARY,
     },
-    colProduct: {
-      width: 120,
+    colService: {
+      flex: 1,
       paddingRight: 8,
     },
-    colSupplier: {
-      width: 90,
-      paddingRight: 8,
-    },
-    colQty: {
-      width: 40,
+    colCount: {
+      width: 60,
       textAlign: 'center',
-    },
-    colCost: {
-      width: 80,
-      textAlign: 'right',
     },
     colRevenue: {
-      width: 80,
+      width: 100,
       textAlign: 'right',
-    },
-    colProfit: {
-      width: 80,
-      textAlign: 'right',
-    },
-    emptyReport: {
-      fontSize: fonts.FONT_SIZE_16,
-      color: colors.TEXT_TERTIARY,
-      textAlign: 'center',
-      marginTop: 40,
     },
     transactionsContainer: {
       backgroundColor: colors.CARD_BACKGROUND,
@@ -155,7 +153,7 @@ const GetDailyReportScreenStyles = (colors: ThemeColors) => {
     transactionInfo: {
       flex: 1,
     },
-    transactionId: {
+    transactionName: {
       fontSize: fonts.FONT_SIZE_14,
       fontWeight: '700',
       color: colors.TEXT_PRIMARY,
@@ -165,37 +163,18 @@ const GetDailyReportScreenStyles = (colors: ThemeColors) => {
       color: colors.TEXT_TERTIARY,
       marginTop: 2,
     },
-    transactionRight: {
-      alignItems: 'flex-end',
-    },
     transactionAmount: {
       fontSize: fonts.FONT_SIZE_14,
       fontWeight: '700',
       color: colors.PRIMARY,
     },
-    transactionItems: {
-      fontSize: fonts.FONT_SIZE_12,
-      color: colors.TEXT_SECONDARY,
-      marginTop: 2,
-    },
-    sectionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 12,
-    },
-    viewTransactionsBtn: {
-      backgroundColor: colors.PRIMARY_LIGHT,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 10,
-    },
-    viewTransactionsBtnText: {
-      fontSize: fonts.FONT_SIZE_12,
-      fontWeight: '700',
-      color: colors.PRIMARY,
+    emptyText: {
+      fontSize: fonts.FONT_SIZE_16,
+      color: colors.TEXT_TERTIARY,
+      textAlign: 'center',
+      marginTop: 40,
     },
   });
 };
 
-export default GetDailyReportScreenStyles;
+export default GetServiceReportScreenStyles;
