@@ -1,4 +1,4 @@
-import { Platform, PermissionsAndroid } from 'react-native';
+import { NativeModules, Platform, PermissionsAndroid } from 'react-native';
 import {
   BLEPrinter,
   IBLEPrinter,
@@ -69,6 +69,17 @@ export const disconnectPrinter = async (): Promise<void> => {
 export const printImageBase64 = async (base64: string, paperWidth: 58 | 80 = 58): Promise<void> => {
   await BLEPrinter.printImageBase64(base64, {
     imageWidth: paperWidth === 80 ? 560 : 380,
+  });
+};
+
+export const printTSPLLabelImageBase64 = async (base64: string, labelWidthMm: number, labelHeightMm: number, gapMm: number, copies: number): Promise<void> => {
+  const imageWidth = Math.round((labelWidthMm / 25.4) * 203);
+  const imageHeight = Math.round((labelHeightMm / 25.4) * 203);
+  if (Platform.OS !== 'android' || typeof NativeModules.RNBLEPrinter?.printTSPLLabelImageBase64 !== 'function') {
+    throw new Error('TSPL label printing requires a rebuilt Android app.');
+  }
+  await new Promise<void>((resolve, reject) => {
+    NativeModules.RNBLEPrinter.printTSPLLabelImageBase64(base64, imageWidth, imageHeight, labelWidthMm, labelHeightMm, gapMm, copies, resolve, (error: string) => reject(new Error(error)));
   });
 };
 

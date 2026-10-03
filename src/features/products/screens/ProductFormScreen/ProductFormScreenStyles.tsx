@@ -243,6 +243,13 @@ const GetProductFormScreenStyles = (colors: ThemeColors) => {
       color: colors.TEXT_TERTIARY,
       marginBottom: 10,
     },
+    labelSizeRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginBottom: 6 },
+    labelSizeField: { width: 92 },
+    copyCountRow: { width: '100%', flexDirection: 'row', justifyContent: 'center', marginTop: 2 },
+    labelSizeCaption: { fontSize: 11, fontWeight: '600', color: colors.TEXT_TERTIARY, marginBottom: 4 },
+    labelSizeInput: { backgroundColor: colors.MAIN_BACKGROUND, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, fontSize: 14, color: colors.INPUT_TEXT, borderWidth: 1, borderColor: colors.BORDER, textAlign: 'center' },
+    labelSizeTimes: { fontSize: 18, color: colors.TEXT_TERTIARY, paddingBottom: 8 },
+    labelSizeHint: { fontSize: 10, color: colors.TEXT_TERTIARY, marginBottom: 8, textAlign: 'center' },
     barcodeActionsRow: {
       flexDirection: 'row',
       gap: 10,

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -34,14 +34,14 @@ import useProductForm from '../../hooks/useProductForm';
 import { BarcodeType } from '../../types';
 import { usePrinterStore } from '../../../../shared/store/printerStore';
 import {
-  printImageBase64,
+  printTSPLLabelImageBase64,
   isConnected as isPrinterConnected,
 } from '../../../../shared/services/bluetoothPrinterService';
 import { Supplier } from '../../../../shared/types';
 import { getDatabase } from '../../../../shared/db/database';
 import { getAllSuppliers } from '../../../suppliers/services/supplierService';
 import { useSettingsStore } from '../../../../shared/store/settingsStore';
-import { getSetting } from '../../../../shared/services/settingsService';
+import { getSetting, setSetting } from '../../../../shared/services/settingsService';
 import { formatCurrency } from '../../../../shared/utils/format';
 
 const GRADIENT_COLORS = ['#02078A', '#010450', '#01022E'];
@@ -83,6 +83,10 @@ const ProductFormScreen = () => {
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [showSupplierPicker, setShowSupplierPicker] = useState(false);
+  const [labelWidthMm, setLabelWidthMm] = useState('30');
+  const [labelHeightMm, setLabelHeightMm] = useState('20');
+  const [labelGapMm, setLabelGapMm] = useState('2');
+  const [printCount, setPrintCount] = useState('1');
   const { profitMargin, setProfitMargin } = useSettingsStore();
 
   const confirmGoBack = useCallback(() => {
@@ -158,7 +162,46 @@ const ProductFormScreen = () => {
   };
 
   const thermalConnected = usePrinterStore((s) => s.isConnected);
-  const paperWidth = usePrinterStore((s) => s.paperWidth);
+
+  useEffect(() => {
+    const loadLabelSize = async () => {
+      try {
+        const db = await getDatabase();
+        const [width, height, gap] = await Promise.all([
+          getSetting(db, 'barcode_label_width_mm'),
+          getSetting(db, 'barcode_label_height_mm'),
+          getSetting(db, 'barcode_label_gap_mm'),
+        ]);
+        if (width && Number(width) >= 20 && Number(width) <= 76) setLabelWidthMm(width);
+        if (height && Number(height) >= 10 && Number(height) <= 300) setLabelHeightMm(height);
+        if (gap && Number(gap) >= 0 && Number(gap) <= 10) setLabelGapMm(gap);
+      } catch {
+        // Keep default 30 x 20 mm label size.
+      }
+    };
+    void loadLabelSize();
+  }, []);
+
+  const saveLabelDimension = async (key: 'barcode_label_width_mm' | 'barcode_label_height_mm' | 'barcode_label_gap_mm', value: string) => {
+    const dimension = Number(value);
+    const valid = Number.isFinite(dimension) && (key === 'barcode_label_width_mm'
+      ? dimension >= 20 && dimension <= 76
+      : key === 'barcode_label_height_mm' ? dimension >= 10 && dimension <= 300 : dimension >= 0 && dimension <= 10);
+    if (!valid) {
+      Alert.alert('Invalid label size', key === 'barcode_label_width_mm'
+        ? 'Label width must be between 20 and 76 mm.'
+        : key === 'barcode_label_height_mm' ? 'Label height must be between 10 and 300 mm.' : 'Label gap must be between 0 and 10 mm.');
+      return;
+    }
+    try {
+      const db = await getDatabase();
+      await setSetting(db, key, String(dimension));
+    } catch {
+      Alert.alert('Error', 'Could not save the label size.');
+    }
+  };
+
+
 
   const captureBarcode = async (): Promise<string | null> => {
     try {
@@ -170,20 +213,17 @@ const ProductFormScreen = () => {
     }
   };
 
-  const handleNormalPrint = async (base64: string) => {
+  const handleNormalPrint = async (base64: string, copies: number) => {
+    const labels = Array.from({ length: copies }, () =>
+      '<div class="label"><img src="data:image/png;base64,' + base64 + '" /></div>',
+    ).join('');
     await RNPrint.print({
-      html: `
-        <html>
-          <body style="text-align:center; padding:20px;">
-            <img src="data:image/png;base64,${base64}" style="max-width:300px;" />
-          </body>
-        </html>
-      `,
+      html: '<html><head><style>@page{size:' + labelWidthMm + 'mm ' + labelHeightMm + 'mm;margin:0}body{margin:0}.label{width:' + labelWidthMm + 'mm;height:' + labelHeightMm + 'mm;page-break-after:always;display:flex;align-items:center;justify-content:center}.label img{width:' + labelWidthMm + 'mm;height:' + labelHeightMm + 'mm}</style></head><body>' + labels + '</body></html>',
     });
   };
 
-  const handleThermalPrint = async (base64: string) => {
-    await printImageBase64(base64, paperWidth);
+  const handleThermalPrint = async (base64: string, copies: number) => {
+    await printTSPLLabelImageBase64(base64, Number(labelWidthMm), Number(labelHeightMm), Number(labelGapMm), copies);
   };
 
   const handleSaveImage = async () => {
@@ -209,6 +249,11 @@ const ProductFormScreen = () => {
   };
 
   const handlePrint = async () => {
+    const copies = Number(printCount);
+    if (!Number.isInteger(copies) || copies < 1 || copies > 500) {
+      Alert.alert('Invalid print count', 'Enter a whole number from 1 to 500.');
+      return;
+    }
     const base64 = await captureBarcode();
     if (!base64) return;
 
@@ -218,7 +263,7 @@ const ProductFormScreen = () => {
           text: 'Thermal Printer',
           onPress: async () => {
             try {
-              await handleThermalPrint(base64);
+              await handleThermalPrint(base64, copies);
             } catch {
               Alert.alert('Print Error', 'Failed to print to thermal printer');
             }
@@ -228,7 +273,7 @@ const ProductFormScreen = () => {
           text: 'Normal Print',
           onPress: async () => {
             try {
-              await handleNormalPrint(base64);
+              await handleNormalPrint(base64, copies);
             } catch (error: any) {
               if (error?.message !== 'User cancelled') {
                 Alert.alert('Print Error', 'Failed to print barcode');
@@ -240,7 +285,7 @@ const ProductFormScreen = () => {
       ]);
     } else {
       try {
-        await handleNormalPrint(base64);
+        await handleNormalPrint(base64, copies);
       } catch (error: any) {
         if (error?.message !== 'User cancelled') {
           Alert.alert('Print Error', 'Failed to print barcode');
@@ -480,11 +525,61 @@ const ProductFormScreen = () => {
 
             {barcode.trim().length > 0 && (
               <View style={styles.previewContainer}>
-                <Text style={styles.previewLabel}>Preview</Text>
+                <Text style={styles.previewLabel}>Barcode sticker size</Text>
+                <View style={styles.labelSizeRow}>
+                  <View style={styles.labelSizeField}>
+                    <Text style={styles.labelSizeCaption}>Width (mm)</Text>
+                    <TextInput
+                      style={styles.labelSizeInput}
+                      value={labelWidthMm}
+                      onChangeText={setLabelWidthMm}
+                      onBlur={() => void saveLabelDimension('barcode_label_width_mm', labelWidthMm)}
+                      keyboardType="decimal-pad"
+                      selectTextOnFocus
+                    />
+                  </View>
+                  <Text style={styles.labelSizeTimes}>x</Text>
+                  <View style={styles.labelSizeField}>
+                    <Text style={styles.labelSizeCaption}>Height (mm)</Text>
+                    <TextInput
+                      style={styles.labelSizeInput}
+                      value={labelHeightMm}
+                      onChangeText={setLabelHeightMm}
+                      onBlur={() => void saveLabelDimension('barcode_label_height_mm', labelHeightMm)}
+                      keyboardType="decimal-pad"
+                      selectTextOnFocus
+                    />
+                  </View>
+                  <View style={styles.labelSizeField}>
+                    <Text style={styles.labelSizeCaption}>Gap (mm)</Text>
+                    <TextInput
+                      style={styles.labelSizeInput}
+                      value={labelGapMm}
+                      onChangeText={setLabelGapMm}
+                      onBlur={() => void saveLabelDimension('barcode_label_gap_mm', labelGapMm)}
+                      keyboardType="decimal-pad"
+                      selectTextOnFocus
+                    />
+                  </View>
+                </View>
+                <View style={styles.copyCountRow}>
+                  <View style={styles.labelSizeField}>
+                    <Text style={styles.labelSizeCaption}>Print count</Text>
+                    <TextInput
+                      style={styles.labelSizeInput}
+                      value={printCount}
+                      onChangeText={setPrintCount}
+                      keyboardType="number-pad"
+                      maxLength={3}
+                      selectTextOnFocus
+                    />
+                  </View>
+                </View>
+                <Text style={styles.labelSizeHint}>Sticker width: 20-76 mm; height: 10-300 mm; gap: 0-10 mm.</Text>
                 <ViewShot
                   ref={barcodeRef}
                   options={{ format: 'png', quality: 1.0, result: 'tmpfile', pixelRatio: 8 }}>
-                  <BarcodeDisplay value={barcode} type={barcodeType} label={name || undefined} price={price} />
+                  <BarcodeDisplay value={barcode} type={barcodeType} label={name || undefined} price={price} labelSizeMm={{ width: Number(labelWidthMm) || 30, height: Number(labelHeightMm) || 20 }} />
                 </ViewShot>
                 <View style={styles.barcodeActionsRow}>
                   <TouchableOpacity style={styles.printButton} onPress={handlePrint}>
