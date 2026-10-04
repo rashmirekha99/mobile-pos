@@ -4,6 +4,9 @@ import {
   Text,
   TextInput,
   FlatList,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
   TouchableOpacity,
   Alert,
   Modal,
@@ -167,6 +170,9 @@ const POSScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoiding}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <AppBar title="Point of Sale" />
 
       <View style={styles.topActions}>
@@ -280,6 +286,10 @@ const POSScreen = () => {
         }
       />
 
+      <ScrollView
+        style={styles.footerScroll}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag">
       <View style={styles.footer}>
         {discount > 0 && (
           <View style={styles.subtotalRow}>
@@ -319,12 +329,14 @@ const POSScreen = () => {
             <Text style={styles.changeAmount}>{formatCurrency(changeOrBalance)}</Text>
           </View>
         </View>
-        <MainButton
-          title="Checkout"
-          onPress={onCheckout}
-          disabled={totalItemCount === 0}
-        />
+      <MainButton
+        title="Checkout"
+        onPress={onCheckout}
+        disabled={totalItemCount === 0}
+      />
       </View>
+      </ScrollView>
+      </KeyboardAvoidingView>
 
       <ScannerModal
         visible={scannerVisible}

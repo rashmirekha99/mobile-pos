@@ -8,6 +8,9 @@ const GetPOSScreenStyles = (colors: ThemeColors) => {
       flex: 1,
       backgroundColor: colors.MAIN_BACKGROUND,
     },
+    keyboardAvoiding: {
+      flex: 1,
+    },
     topActions: {
       flexDirection: 'row',
       paddingHorizontal: 16,
@@ -121,6 +124,10 @@ const GetPOSScreenStyles = (colors: ThemeColors) => {
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 8,
+    },
+    footerScroll: {
+      flexGrow: 0,
+      maxHeight: '45%',
     },
     subtotalRow: {
       flexDirection: 'row',
