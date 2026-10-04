@@ -2,6 +2,7 @@ export type RootStackParamList = {
   Dashboard: undefined;
   ProductList: undefined;
   ProductForm: { productId?: number } | undefined;
+  ProductCategories: undefined;
   POS: { editSaleId?: number } | undefined;
   Receipt: { saleId: number };
   DailyReport: undefined;

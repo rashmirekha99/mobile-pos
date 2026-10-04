@@ -8,16 +8,18 @@ import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
 import AppBar from '../../../../shared/components/AppBar';
 import SupplierFilterDropdown from '../../../../shared/components/SupplierFilterDropdown';
+import CategoryFilterDropdown from '../../../../shared/components/CategoryFilterDropdown';
 import useTheme from '../../../../shared/theme/useTheme';
 import GetStockDetailsScreenStyles from './StockDetailsScreenStyles';
 import { getDatabase } from '../../../../shared/db/database';
 import { getAllProducts } from '../../../products/services/productService';
+import { getAllProductCategories, ProductCategory } from '../../../products/services/categoryService';
 import { getAllSuppliers } from '../../../suppliers/services/supplierService';
 import { Product, Supplier } from '../../../../shared/types';
 import { formatCurrency, formatDate, getTodayDateString } from '../../../../shared/utils/format';
 import { STORE_NAME } from '../../../../configs/Constants';
 
-type StockDetailsItem = Product & { supplier_name: string | null };
+type StockDetailsItem = Product & { supplier_name: string | null; category_name: string | null };
 
 const escapeHtml = (value: string) => value
   .replace(/&/g, '&amp;')
@@ -31,13 +33,17 @@ const StockDetailsScreen = () => {
   const styles = GetStockDetailsScreenStyles(colors);
   const [items, setItems] = useState<StockDetailsItem[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [filterSupplierId, setFilterSupplierId] = useState<number | null>(null);
+  const [filterCategoryId, setFilterCategoryId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const filteredItems = useMemo(() => {
-    if (filterSupplierId === null) return items;
-    return items.filter(item => item.supplier_id === filterSupplierId);
-  }, [items, filterSupplierId]);
+    return items.filter(item =>
+      (filterSupplierId === null || item.supplier_id === filterSupplierId) &&
+      (filterCategoryId === null || item.category_id === filterCategoryId),
+    );
+  }, [items, filterSupplierId, filterCategoryId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -46,19 +52,28 @@ const StockDetailsScreen = () => {
         setIsLoading(true);
         try {
           const db = await getDatabase();
-          const [products, suppliers] = await Promise.all([
+          const [products, supplierData, categoryData] = await Promise.all([
             getAllProducts(db),
             getAllSuppliers(db),
+            getAllProductCategories(db),
           ]);
           if (!active) return;
           const supplierNames = new Map<number, string>(
-            suppliers.map((supplier: Supplier) => [supplier.id, supplier.name]),
+            supplierData.map((supplier: Supplier) => [supplier.id, supplier.name]),
           );
+          const categoryNames = new Map<number, string>(
+            categoryData.map((category: ProductCategory) => [category.id, category.name]),
+          );
+          setSuppliers(supplierData);
+          setCategories(categoryData);
           setItems(products.map(product => ({
             ...product,
             supplier_name: product.supplier_id === null
               ? null
               : supplierNames.get(product.supplier_id) || null,
+            category_name: product.category_id == null
+              ? null
+              : categoryNames.get(product.category_id) || null,
           })));
           setSuppliers(suppliers);
         } catch (error) {
@@ -77,6 +92,7 @@ const StockDetailsScreen = () => {
       <tr>
         <td class="row-number">${index + 1}</td>
         <td>${escapeHtml(item.name)}</td>
+        <td>${escapeHtml(item.category_name || '-')}</td>
         <td>${escapeHtml(item.supplier_name || '-')}</td>
         <td class="number">${formatCurrency(item.buying_price)}</td>
         <td class="number">${formatCurrency(item.price)}</td>
@@ -94,12 +110,13 @@ const StockDetailsScreen = () => {
           <thead><tr style="background:#3448a5; color:white;">
             <th class="row-number">No.</th>
             <th style="text-align:left;">Product</th>
+            <th style="text-align:left;">Category</th>
             <th style="text-align:left;">Supplier</th>
             <th style="text-align:right;">Buying Price</th>
             <th style="text-align:right;">Selling Price</th>
             <th style="text-align:center;">Qty</th>
           </tr></thead>
-          <tbody>${rows || '<tr><td colspan="6" style="text-align:center; padding:16px;">No products found</td></tr>'}</tbody>
+          <tbody>${rows || '<tr><td colspan="7" style="text-align:center; padding:16px;">No products found</td></tr>'}</tbody>
         </table>
         <p style="text-align:center; color:#888; font-size:11px; margin-top:18px;">${filteredItems.length} products</p>
       </body>
@@ -170,11 +187,22 @@ const StockDetailsScreen = () => {
           <Text style={styles.message}>Loading stock details...</Text>
         ) : (
           <>
-            <SupplierFilterDropdown
-              suppliers={suppliers}
-              selectedId={filterSupplierId}
-              onSelect={setFilterSupplierId}
-            />
+            <View style={styles.filterRow}>
+              <View style={styles.filterItem}>
+                <SupplierFilterDropdown
+                  suppliers={suppliers}
+                  selectedId={filterSupplierId}
+                  onSelect={setFilterSupplierId}
+                />
+              </View>
+              <View style={styles.filterItem}>
+                <CategoryFilterDropdown
+                  categories={categories}
+                  selectedId={filterCategoryId}
+                  onSelect={setFilterCategoryId}
+                />
+              </View>
+            </View>
             {filteredItems.length === 0 ? (
               <Text style={styles.message}>No products found</Text>
             ) : (
@@ -183,6 +211,7 @@ const StockDetailsScreen = () => {
                   <View style={styles.tableHeader}>
                     <Text style={[styles.headerCell, styles.numberColumn]}>No.</Text>
                     <Text style={[styles.headerCell, styles.productColumn]}>Product</Text>
+                    <Text style={[styles.headerCell, styles.categoryColumn]}>Category</Text>
                     <Text style={[styles.headerCell, styles.supplierColumn]}>Supplier</Text>
                     <Text style={[styles.headerCell, styles.priceColumn]}>Buying Price</Text>
                     <Text style={[styles.headerCell, styles.priceColumn]}>Selling Price</Text>
@@ -192,6 +221,7 @@ const StockDetailsScreen = () => {
                     <View key={item.id} style={[styles.tableRow, index % 2 === 1 && styles.alternateRow]}>
                       <Text style={[styles.cell, styles.numberColumn]}>{index + 1}</Text>
                       <Text style={[styles.cell, styles.productColumn]} numberOfLines={1}>{item.name}</Text>
+                      <Text style={[styles.cell, styles.categoryColumn]} numberOfLines={1}>{item.category_name || '-'}</Text>
                       <Text style={[styles.cell, styles.supplierColumn]} numberOfLines={1}>{item.supplier_name || '-'}</Text>
                       <Text style={[styles.cell, styles.priceColumn]} numberOfLines={1}>{formatCurrency(item.buying_price)}</Text>
                       <Text style={[styles.cell, styles.priceColumn]} numberOfLines={1}>{formatCurrency(item.price)}</Text>

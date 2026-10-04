@@ -4,6 +4,7 @@ export interface Product {
   price: number;
   buying_price: number;
   supplier_id: number | null;
+  category_id?: number | null;
   sku: string | null;
   barcode: string | null;
   barcode_type: 'QR' | 'EAN13' | 'CODE128';

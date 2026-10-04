@@ -87,6 +87,14 @@ export const getDatabase = async (): Promise<SQLiteDatabase> => {
     );
   `);
 
+  await dbInstance.executeSql(`
+    CREATE TABLE IF NOT EXISTS product_categories (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      name        TEXT NOT NULL COLLATE NOCASE UNIQUE,
+      created_at  TEXT DEFAULT (datetime('now','localtime'))
+    );
+  `);
+
   // Migration: add buying_price and supplier_id to products
   try {
     await dbInstance.executeSql(
@@ -107,6 +115,13 @@ export const getDatabase = async (): Promise<SQLiteDatabase> => {
   try {
     await dbInstance.executeSql(
       "ALTER TABLE sales ADD COLUMN discount REAL NOT NULL DEFAULT 0",
+    );
+  } catch (_) {
+    // Column already exists
+  }
+  try {
+    await dbInstance.executeSql(
+      'ALTER TABLE products ADD COLUMN category_id INTEGER REFERENCES product_categories(id)',
     );
   } catch (_) {
     // Column already exists

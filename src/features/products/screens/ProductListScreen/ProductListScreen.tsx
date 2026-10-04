@@ -99,6 +99,14 @@ const ProductListScreen = () => {
           onChangeText={setSearchQuery}
         />
       </View>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Product List</Text>
+        <TouchableOpacity
+          style={styles.categoriesButton}
+          onPress={() => navigation.navigate('ProductCategories')}>
+          <Text style={styles.categoriesButtonText}>Categories</Text>
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={products}
         keyExtractor={(item) => item.id.toString()}

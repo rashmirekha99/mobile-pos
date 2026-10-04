@@ -15,6 +15,7 @@ const useProductForm = (productId?: number) => {
   const [price, setPrice] = useState('');
   const [buyingPrice, setBuyingPrice] = useState('');
   const [supplierId, setSupplierId] = useState<number | null>(null);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
   const [sku, setSku] = useState('');
   const [barcode, setBarcode] = useState('');
   const [barcodeType, setBarcodeType] = useState<BarcodeType>('EAN13');
@@ -37,6 +38,7 @@ const useProductForm = (productId?: number) => {
         setPrice(product.price.toString());
         setBuyingPrice(product.buying_price ? product.buying_price.toString() : '');
         setSupplierId(product.supplier_id);
+        setCategoryId(product.category_id ?? null);
         setSku(product.sku || '');
         setBarcode(product.barcode || '');
         setBarcodeType(product.barcode_type);
@@ -77,6 +79,7 @@ const useProductForm = (productId?: number) => {
         price: parseFloat(price),
         buying_price: parseFloat(buyingPrice) || 0,
         supplier_id: supplierId,
+        category_id: categoryId,
         sku: sku.trim() || null,
         barcode: barcode.trim() || null,
         barcode_type: barcodeType,
@@ -113,6 +116,8 @@ const useProductForm = (productId?: number) => {
     setBuyingPrice,
     supplierId,
     setSupplierId,
+    categoryId,
+    setCategoryId,
     sku,
     setSku,
     barcode,

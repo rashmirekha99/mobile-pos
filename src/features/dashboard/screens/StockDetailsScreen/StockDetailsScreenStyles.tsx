@@ -11,8 +11,17 @@ const GetStockDetailsScreenStyles = (colors: ThemeColors) => StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  filterItem: {
+    flex: 1,
+    minWidth: 0,
+  },
   tableContainer: {
-    minWidth: 655,
+    minWidth: 820,
     overflow: 'hidden',
     borderRadius: 12,
     backgroundColor: colors.CARD_BACKGROUND,
@@ -49,6 +58,9 @@ const GetStockDetailsScreenStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   productColumn: {
     width: 160,
+  },
+  categoryColumn: {
+    width: 130,
   },
   numberColumn: {
     width: 40,

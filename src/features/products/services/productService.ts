@@ -60,8 +60,8 @@ export const insertProduct = async (
   product: Omit<Product, 'id' | 'created_at'>,
 ): Promise<number> => {
   const [result] = await db.executeSql(
-    'INSERT INTO products (name, price, buying_price, supplier_id, sku, barcode, barcode_type, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [product.name, product.price, product.buying_price, product.supplier_id, product.sku, product.barcode, product.barcode_type, product.stock],
+    'INSERT INTO products (name, price, buying_price, supplier_id, category_id, sku, barcode, barcode_type, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [product.name, product.price, product.buying_price, product.supplier_id, product.category_id ?? null, product.sku, product.barcode, product.barcode_type, product.stock],
   );
   return result.insertId;
 };
@@ -72,8 +72,8 @@ export const updateProduct = async (
   product: Omit<Product, 'id' | 'created_at'>,
 ): Promise<void> => {
   await db.executeSql(
-    'UPDATE products SET name = ?, price = ?, buying_price = ?, supplier_id = ?, sku = ?, barcode = ?, barcode_type = ?, stock = ? WHERE id = ?',
-    [product.name, product.price, product.buying_price, product.supplier_id, product.sku, product.barcode, product.barcode_type, product.stock, id],
+    'UPDATE products SET name = ?, price = ?, buying_price = ?, supplier_id = ?, category_id = ?, sku = ?, barcode = ?, barcode_type = ?, stock = ? WHERE id = ?',
+    [product.name, product.price, product.buying_price, product.supplier_id, product.category_id ?? null, product.sku, product.barcode, product.barcode_type, product.stock, id],
   );
 };
 

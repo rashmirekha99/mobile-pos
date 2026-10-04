@@ -5,6 +5,7 @@ import { RootStackParamList } from './RootStackParamsList';
 import DashboardScreen from '../../features/dashboard/screens/DashboardScreen/DashboardScreen';
 import ProductListScreen from '../../features/products/screens/ProductListScreen/ProductListScreen';
 import ProductFormScreen from '../../features/products/screens/ProductFormScreen/ProductFormScreen';
+import ProductCategoriesScreen from '../../features/products/screens/ProductCategoriesScreen/ProductCategoriesScreen';
 import POSScreen from '../../features/sales/screens/POSScreen/POSScreen';
 import ReceiptScreen from '../../features/sales/screens/ReceiptScreen/ReceiptScreen';
 import DailyReportScreen from '../../features/reports/screens/DailyReportScreen/DailyReportScreen';
@@ -34,6 +35,7 @@ const RootStackNavigator = () => {
         <Stack.Screen name="Dashboard" component={DashboardScreen} />
         <Stack.Screen name="ProductList" component={ProductListScreen} />
         <Stack.Screen name="ProductForm" component={ProductFormScreen} />
+        <Stack.Screen name="ProductCategories" component={ProductCategoriesScreen} />
         <Stack.Screen name="POS" component={POSScreen} />
         <Stack.Screen name="Receipt" component={ReceiptScreen} />
         <Stack.Screen name="DailyReport" component={DailyReportScreen} />

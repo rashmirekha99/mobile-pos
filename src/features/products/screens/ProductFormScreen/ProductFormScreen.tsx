@@ -40,6 +40,7 @@ import {
 import { Supplier } from '../../../../shared/types';
 import { getDatabase } from '../../../../shared/db/database';
 import { getAllSuppliers } from '../../../suppliers/services/supplierService';
+import { getAllProductCategories, ProductCategory } from '../../services/categoryService';
 import { useSettingsStore } from '../../../../shared/store/settingsStore';
 import { getSetting, setSetting } from '../../../../shared/services/settingsService';
 import { formatCurrency } from '../../../../shared/utils/format';
@@ -69,6 +70,8 @@ const ProductFormScreen = () => {
     setBuyingPrice,
     supplierId,
     setSupplierId,
+    categoryId,
+    setCategoryId,
     sku,
     setSku,
     barcode,
@@ -85,6 +88,8 @@ const ProductFormScreen = () => {
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [showSupplierPicker, setShowSupplierPicker] = useState(false);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [labelWidthMm, setLabelWidthMm] = useState('30');
   const [labelHeightMm, setLabelHeightMm] = useState('20');
   const [labelGapMm, setLabelGapMm] = useState('2');
@@ -118,6 +123,12 @@ const ProductFormScreen = () => {
           setSuppliers(data);
         } catch {}
       };
+      const loadCategories = async () => {
+        try {
+          const db = await getDatabase();
+          setCategories(await getAllProductCategories(db));
+        } catch {}
+      };
       const loadMargin = async () => {
         try {
           const db = await getDatabase();
@@ -131,6 +142,7 @@ const ProductFormScreen = () => {
         } catch {}
       };
       loadSuppliers();
+      loadCategories();
       loadMargin();
     }, []),
   );
@@ -155,6 +167,7 @@ const ProductFormScreen = () => {
   };
 
   const selectedSupplier = suppliers.find((s) => s.id === supplierId);
+  const selectedCategory = categories.find((category) => category.id === categoryId);
 
   const onSave = async () => {
     const success = await handleSave();
@@ -344,7 +357,8 @@ const ProductFormScreen = () => {
           {/* Basic Info */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Basic Info</Text>
-            <View>
+            <View style={styles.basicInfoColumns}>
+              <View style={[styles.columnItem, styles.productNameColumn]}>
               <View style={styles.labelRow}>
                 <Text style={styles.label}>
                   Product Name<Text style={styles.required}>*</Text>
@@ -357,6 +371,26 @@ const ProductFormScreen = () => {
                 value={name}
                 onChangeText={setName}
               />
+              </View>
+              <View style={[styles.columnItem, styles.categoryColumn]}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.label}>Category</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.dropdownButton, styles.categoryDropdown]}
+                  onPress={() => setShowCategoryPicker(true)}>
+                  <Text
+                    style={[
+                      styles.dropdownButtonText,
+                      styles.categoryDropdownText,
+                      !selectedCategory && styles.dropdownPlaceholder,
+                    ]}
+                    numberOfLines={1}>
+                    {selectedCategory?.name || 'Select'}
+                  </Text>
+                  <View style={styles.dropdownArrow} />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
@@ -673,6 +707,53 @@ const ProductFormScreen = () => {
                     style={[
                       styles.modalOptionText,
                       supplierId === item.id && styles.modalOptionTextActive,
+                    ]}>
+                    {item.name}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        visible={showCategoryPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCategoryPicker(false)}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCategoryPicker(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Category</Text>
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => {
+                setCategoryId(null);
+                setShowCategoryPicker(false);
+              }}>
+              <Text style={styles.modalOptionText}>None</Text>
+            </TouchableOpacity>
+            <FlatList
+              data={categories}
+              keyExtractor={(item) => item.id.toString()}
+              ListEmptyComponent={<Text style={styles.emptyCategories}>No categories yet. Add one from the Products screen.</Text>}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.modalOption,
+                    categoryId === item.id && styles.modalOptionActive,
+                  ]}
+                  onPress={() => {
+                    setCategoryId(item.id);
+                    setShowCategoryPicker(false);
+                  }}>
+                  <Text
+                    style={[
+                      styles.modalOptionText,
+                      categoryId === item.id && styles.modalOptionTextActive,
                     ]}>
                     {item.name}
                   </Text>

@@ -175,6 +175,32 @@ const GetProductFormScreenStyles = (colors: ThemeColors) => {
     columnItem: {
       flex: 1,
     },
+    basicInfoColumns: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+    },
+    productNameColumn: {
+      flex: 1.35,
+      minWidth: 0,
+    },
+    categoryColumn: {
+      flex: 1,
+      minWidth: 0,
+    },
+    categoryDropdown: {
+      paddingHorizontal: 10,
+      paddingVertical: 14,
+    },
+    categoryDropdownText: {
+      fontSize: 14,
+    },
+    emptyCategories: {
+      color: colors.TEXT_TERTIARY,
+      fontSize: fonts.FONT_SIZE_14,
+      textAlign: 'center',
+      padding: 16,
+    },
     // Barcode type options
     barcodeTypeRow: {
       flexDirection: 'row',

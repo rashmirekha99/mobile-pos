@@ -22,6 +22,30 @@ const GetProductListScreenStyles = (colors: ThemeColors) => {
       borderWidth: 1,
       borderColor: colors.INPUT_BORDER,
     },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingBottom: 10,
+    },
+    sectionTitle: {
+      flex: 1,
+      fontSize: fonts.FONT_SIZE_16,
+      fontWeight: '700',
+      color: colors.TEXT_PRIMARY,
+    },
+    categoriesButton: {
+      backgroundColor: colors.PRIMARY_LIGHT,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 10,
+    },
+    categoriesButtonText: {
+      fontSize: fonts.FONT_SIZE_12,
+      fontWeight: '700',
+      color: colors.PRIMARY,
+    },
     listContent: {
       paddingBottom: 80,
     },

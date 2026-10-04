@@ -38,7 +38,8 @@ const SupplierFilterDropdown = ({
           style={[
             styles.dropdownText,
             !selected && styles.dropdownPlaceholder,
-          ]}>
+          ]}
+          numberOfLines={1}>
           {selected ? selected.name : 'All Suppliers'}
         </Text>
         <Text style={styles.dropdownArrow}>▼</Text>
