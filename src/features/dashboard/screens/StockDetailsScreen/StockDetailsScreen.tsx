@@ -93,6 +93,7 @@ const StockDetailsScreen = () => {
         <td class="row-number">${index + 1}</td>
         <td>${escapeHtml(item.name)}</td>
         <td>${escapeHtml(item.category_name || '-')}</td>
+        <td>${escapeHtml(item.barcode || '-')}</td>
         <td>${escapeHtml(item.supplier_name || '-')}</td>
         <td class="number">${formatCurrency(item.buying_price)}</td>
         <td class="number">${formatCurrency(item.price)}</td>
@@ -111,12 +112,13 @@ const StockDetailsScreen = () => {
             <th class="row-number">No.</th>
             <th style="text-align:left;">Product</th>
             <th style="text-align:left;">Category</th>
+            <th style="text-align:left;">Barcode</th>
             <th style="text-align:left;">Supplier</th>
             <th style="text-align:right;">Buying Price</th>
             <th style="text-align:right;">Selling Price</th>
             <th style="text-align:center;">Qty</th>
           </tr></thead>
-          <tbody>${rows || '<tr><td colspan="7" style="text-align:center; padding:16px;">No products found</td></tr>'}</tbody>
+          <tbody>${rows || '<tr><td colspan="8" style="text-align:center; padding:16px;">No products found</td></tr>'}</tbody>
         </table>
         <p style="text-align:center; color:#888; font-size:11px; margin-top:18px;">${filteredItems.length} products</p>
       </body>
@@ -212,6 +214,7 @@ const StockDetailsScreen = () => {
                     <Text style={[styles.headerCell, styles.numberColumn]}>No.</Text>
                     <Text style={[styles.headerCell, styles.productColumn]}>Product</Text>
                     <Text style={[styles.headerCell, styles.categoryColumn]}>Category</Text>
+                    <Text style={[styles.headerCell, styles.barcodeColumn]}>Barcode</Text>
                     <Text style={[styles.headerCell, styles.supplierColumn]}>Supplier</Text>
                     <Text style={[styles.headerCell, styles.priceColumn]}>Buying Price</Text>
                     <Text style={[styles.headerCell, styles.priceColumn]}>Selling Price</Text>
@@ -222,6 +225,7 @@ const StockDetailsScreen = () => {
                       <Text style={[styles.cell, styles.numberColumn]}>{index + 1}</Text>
                       <Text style={[styles.cell, styles.productColumn]} numberOfLines={1}>{item.name}</Text>
                       <Text style={[styles.cell, styles.categoryColumn]} numberOfLines={1}>{item.category_name || '-'}</Text>
+                      <Text style={[styles.cell, styles.barcodeColumn]} numberOfLines={1}>{item.barcode || '-'}</Text>
                       <Text style={[styles.cell, styles.supplierColumn]} numberOfLines={1}>{item.supplier_name || '-'}</Text>
                       <Text style={[styles.cell, styles.priceColumn]} numberOfLines={1}>{formatCurrency(item.buying_price)}</Text>
                       <Text style={[styles.cell, styles.priceColumn]} numberOfLines={1}>{formatCurrency(item.price)}</Text>

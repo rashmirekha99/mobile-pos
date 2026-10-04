@@ -1,6 +1,20 @@
 import { SQLiteDatabase } from 'react-native-sqlite-storage';
 import { Product } from '../../../shared/types';
 
+const normalizeProductName = (name: string) => name.trim().toLowerCase();
+
+const productNameAlreadyExists = async (
+  db: SQLiteDatabase,
+  name: string,
+  excludeProductId?: number,
+): Promise<boolean> => {
+  const [results] = await db.executeSql(
+    'SELECT id FROM products WHERE lower(trim(name)) = lower(trim(?)) AND (? IS NULL OR id != ?) LIMIT 1',
+    [name.trim(), excludeProductId ?? null, excludeProductId ?? null],
+  );
+  return results.rows.length > 0;
+};
+
 export const getAllProducts = async (db: SQLiteDatabase): Promise<Product[]> => {
   const [results] = await db.executeSql(
     'SELECT * FROM products ORDER BY created_at DESC',
@@ -59,6 +73,9 @@ export const insertProduct = async (
   db: SQLiteDatabase,
   product: Omit<Product, 'id' | 'created_at'>,
 ): Promise<number> => {
+  if (await productNameAlreadyExists(db, product.name)) {
+    throw new Error('PRODUCT_NAME_ALREADY_EXISTS');
+  }
   const [result] = await db.executeSql(
     'INSERT INTO products (name, price, buying_price, supplier_id, category_id, sku, barcode, barcode_type, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [product.name, product.price, product.buying_price, product.supplier_id, product.category_id ?? null, product.sku, product.barcode, product.barcode_type, product.stock],
@@ -71,6 +88,19 @@ export const updateProduct = async (
   id: number,
   product: Omit<Product, 'id' | 'created_at'>,
 ): Promise<void> => {
+  const [currentProductResult] = await db.executeSql(
+    'SELECT name FROM products WHERE id = ?',
+    [id],
+  );
+  const currentName = currentProductResult.rows.length
+    ? String(currentProductResult.rows.item(0).name)
+    : '';
+  if (
+    normalizeProductName(currentName) !== normalizeProductName(product.name) &&
+    await productNameAlreadyExists(db, product.name, id)
+  ) {
+    throw new Error('PRODUCT_NAME_ALREADY_EXISTS');
+  }
   await db.executeSql(
     'UPDATE products SET name = ?, price = ?, buying_price = ?, supplier_id = ?, category_id = ?, sku = ?, barcode = ?, barcode_type = ?, stock = ? WHERE id = ?',
     [product.name, product.price, product.buying_price, product.supplier_id, product.category_id ?? null, product.sku, product.barcode, product.barcode_type, product.stock, id],

@@ -94,7 +94,9 @@ const useProductForm = (productId?: number) => {
       return true;
     } catch (error: any) {
       const msg = error?.message || 'Failed to save product';
-      if (msg.includes('UNIQUE constraint failed: products.barcode')) {
+      if (msg === 'PRODUCT_NAME_ALREADY_EXISTS') {
+        Alert.alert('Duplicate Product Name', 'Product name already exists');
+      } else if (msg.includes('UNIQUE constraint failed: products.barcode')) {
         Alert.alert('Error', 'A product with this barcode already exists');
       } else if (msg.includes('UNIQUE constraint failed: products.sku')) {
         Alert.alert('Error', 'A product with this SKU already exists');

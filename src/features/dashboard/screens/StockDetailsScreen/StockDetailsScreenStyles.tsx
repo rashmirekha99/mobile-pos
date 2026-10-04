@@ -21,7 +21,7 @@ const GetStockDetailsScreenStyles = (colors: ThemeColors) => StyleSheet.create({
     minWidth: 0,
   },
   tableContainer: {
-    minWidth: 820,
+    minWidth: 970,
     overflow: 'hidden',
     borderRadius: 12,
     backgroundColor: colors.CARD_BACKGROUND,
@@ -61,6 +61,9 @@ const GetStockDetailsScreenStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   categoryColumn: {
     width: 130,
+  },
+  barcodeColumn: {
+    width: 150,
   },
   numberColumn: {
     width: 40,
