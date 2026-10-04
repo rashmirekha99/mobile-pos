@@ -19,6 +19,7 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
       fontSize: fonts.FONT_SIZE_20,
       fontWeight: '700',
       color: colors.TEXT_PRIMARY,
+      textAlign: 'center',
     },
     storeAddress: {
       fontSize: fonts.FONT_SIZE_10,
