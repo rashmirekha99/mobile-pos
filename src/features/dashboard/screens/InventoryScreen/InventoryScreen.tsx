@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
 import RNPrint from 'react-native-print';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
@@ -19,8 +19,10 @@ import { Supplier } from '../../../../shared/types';
 import { getAllSuppliers } from '../../../suppliers/services/supplierService';
 import { STORE_NAME } from '../../../../configs/Constants';
 import { formatDate, getTodayDateString } from '../../../../shared/utils/format';
+import { RootStackParamList } from '../../../../shared/navigators/RootStackParamsList';
 
 const InventoryScreen = () => {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { colors } = useTheme();
   const styles = GetInventoryScreenStyles(colors);
   const [summary, setSummary] = useState<InventorySummary>({
@@ -176,7 +178,14 @@ const InventoryScreen = () => {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Product-wise Stock</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { marginBottom: 0, flexShrink: 1 }]}>Product-wise Stock</Text>
+          <TouchableOpacity
+            style={styles.viewTransactionsBtn}
+            onPress={() => navigation.navigate('StockDetails')}>
+            <Text style={styles.viewTransactionsBtnText}>Stock Details</Text>
+          </TouchableOpacity>
+        </View>
 
         <SupplierFilterDropdown
           suppliers={suppliers}

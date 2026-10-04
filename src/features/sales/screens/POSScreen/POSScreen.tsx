@@ -12,7 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { RootStackParamList } from '../../../../shared/navigators/RootStackParamsList';
 
@@ -30,6 +30,7 @@ import { formatCurrency } from '../../../../shared/utils/format';
 import { getDatabase } from '../../../../shared/db/database';
 import { searchProducts } from '../../../products/services/productService';
 import { getAllServices } from '../../../services/services/serviceService';
+import { deleteSale, getSaleById, getSaleCartItems, getSaleCartServices, updateSaleContents } from '../../services/salesService';
 
 type UnifiedCartItem =
   | { type: 'product'; data: CartItem }
@@ -37,6 +38,9 @@ type UnifiedCartItem =
 
 const POSScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'POS'>>();
+  const editSaleId = route.params?.editSaleId;
+  const isEditingSale = typeof editSaleId === 'number';
   const { colors } = useTheme();
   const styles = GetPOSScreenStyles(colors);
 
@@ -52,6 +56,7 @@ const POSScreen = () => {
     incrementService,
     decrementService,
     clear,
+    replaceCart,
     total,
     totalItemCount,
     handleBarcodeScan,
@@ -66,6 +71,7 @@ const POSScreen = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [servicePickerVisible, setServicePickerVisible] = useState(false);
   const [serviceSearch, setServiceSearch] = useState('');
+  const [loadingSale, setLoadingSale] = useState(isEditingSale);
 
   useEffect(() => {
     const loadServices = async () => {
@@ -77,6 +83,36 @@ const POSScreen = () => {
     };
     loadServices();
   }, []);
+
+  useEffect(() => {
+    if (typeof editSaleId !== 'number') return;
+    let cancelled = false;
+    const loadSaleForEditing = async () => {
+      setLoadingSale(true);
+      try {
+        const db = await getDatabase();
+        const [sale, existingItems, existingServices] = await Promise.all([
+          getSaleById(db, editSaleId),
+          getSaleCartItems(db, editSaleId),
+          getSaleCartServices(db, editSaleId),
+        ]);
+        if (!sale) throw new Error('This sale could not be found');
+        if (cancelled) return;
+        replaceCart(existingItems, existingServices);
+        setDiscountInput(String(sale.discount || 0));
+        setReceivedAmountInput(String(sale.received_amount || 0));
+      } catch (error: any) {
+        if (!cancelled) {
+          Alert.alert('Unable to Edit Sale', error?.message || 'Failed to load this sale');
+          navigation.goBack();
+        }
+      } finally {
+        if (!cancelled) setLoadingSale(false);
+      }
+    };
+    loadSaleForEditing();
+    return () => { cancelled = true; };
+  }, [editSaleId, navigation, replaceCart]);
 
   const handleSearch = useCallback(
     async (query: string) => {
@@ -150,22 +186,60 @@ const POSScreen = () => {
       return;
     }
 
-    const msg = `${discount > 0 ? `Subtotal: ${formatCurrency(total)}\nDiscount: -${formatCurrency(discount)}\n` : ''}Total: ${formatCurrency(roundedFinalTotal)}\nReceived: ${formatCurrency(receivedAmount)}\nChange: ${formatCurrency(receivedAmount - roundedFinalTotal)}\n\nProceed with checkout?`;
+    const msg = `${discount > 0 ? `Subtotal: ${formatCurrency(total)}\nDiscount: -${formatCurrency(discount)}\n` : ''}Total: ${formatCurrency(roundedFinalTotal)}\nReceived: ${formatCurrency(receivedAmount)}\nChange: ${formatCurrency(receivedAmount - roundedFinalTotal)}\n\n${isEditingSale ? 'Save changes to this sale?' : 'Proceed with checkout?'}`;
 
-    Alert.alert('Confirm Checkout', msg, [
+    Alert.alert(isEditingSale ? 'Save Sale Changes' : 'Confirm Checkout', msg, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Confirm',
         onPress: async () => {
-          const saleId = await handleCheckout(discount, receivedAmount);
+          let saleId: number | null = null;
+          if (isEditingSale && typeof editSaleId === 'number') {
+            try {
+              const db = await getDatabase();
+              await updateSaleContents(db, editSaleId, items, serviceItems, discount, receivedAmount);
+              saleId = editSaleId;
+            } catch (error: any) {
+              Alert.alert('Unable to Save Sale', error?.message || 'Failed to save changes');
+              return;
+            }
+          } else {
+            saleId = await handleCheckout(discount, receivedAmount);
+          }
           if (saleId) {
             setDiscountInput('');
             setReceivedAmountInput('');
-            navigation.navigate('Receipt', { saleId });
+            if (isEditingSale) navigation.goBack();
+            else navigation.navigate('Receipt', { saleId });
           }
         },
       },
     ]);
+  };
+
+  const onDeleteEditedSale = () => {
+    if (typeof editSaleId !== 'number') return;
+    Alert.alert(
+      'Delete Sale',
+      'Delete this entire sale and restore its product stock?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await getDatabase();
+              await deleteSale(db, editSaleId);
+              clear();
+              navigation.navigate('Dashboard');
+            } catch (error: any) {
+              Alert.alert('Unable to Delete Sale', error?.message || 'Failed to delete this sale');
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -173,7 +247,14 @@ const POSScreen = () => {
       <KeyboardAvoidingView
         style={styles.keyboardAvoiding}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <AppBar title="Point of Sale" />
+      <AppBar
+        title={isEditingSale ? `Edit Sale #${editSaleId}` : 'Point of Sale'}
+        rightActions={isEditingSale && !loadingSale ? [{
+          label: 'Delete',
+          destructive: true,
+          onPress: onDeleteEditedSale,
+        }] : undefined}
+      />
 
       <View style={styles.topActions}>
         <TouchableOpacity
@@ -330,9 +411,9 @@ const POSScreen = () => {
           </View>
         </View>
       <MainButton
-        title="Checkout"
+        title={isEditingSale ? 'Save Changes' : 'Checkout'}
         onPress={onCheckout}
-        disabled={totalItemCount === 0}
+        disabled={totalItemCount === 0 || loadingSale}
       />
       </View>
       </ScrollView>

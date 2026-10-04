@@ -10,6 +10,112 @@ export interface SaleServiceItem {
   subtotal: number;
 }
 
+export const getSaleCartItems = async (db: SQLiteDatabase, saleId: number): Promise<CartItem[]> => {
+  const [results] = await db.executeSql(
+    `SELECT p.*, si.quantity, si.price AS sale_price FROM sale_items si
+     JOIN products p ON p.id = si.product_id WHERE si.sale_id = ?`,
+    [saleId],
+  );
+  const items: CartItem[] = [];
+  for (let i = 0; i < results.rows.length; i++) {
+    const row = results.rows.item(i);
+    items.push({ product: { ...row, price: Number(row.sale_price) }, quantity: Number(row.quantity) });
+  }
+  return items;
+};
+
+export const getSaleCartServices = async (db: SQLiteDatabase, saleId: number): Promise<ServiceCartItem[]> => {
+  const [results] = await db.executeSql(
+    `SELECT s.*, ssi.quantity, ssi.price AS sale_price FROM sale_service_items ssi
+     JOIN services s ON s.id = ssi.service_id WHERE ssi.sale_id = ?`,
+    [saleId],
+  );
+  const items: ServiceCartItem[] = [];
+  for (let i = 0; i < results.rows.length; i++) {
+    const row = results.rows.item(i);
+    items.push({ service: { ...row, price: Number(row.sale_price) }, quantity: Number(row.quantity) });
+  }
+  return items;
+};
+
+export const updateSaleContents = async (
+  db: SQLiteDatabase,
+  saleId: number,
+  items: CartItem[],
+  serviceItems: ServiceCartItem[],
+  discount: number,
+  receivedAmount: number,
+): Promise<void> => {
+  if (!Number.isFinite(discount) || discount < 0 || !Number.isFinite(receivedAmount) || receivedAmount < 0) {
+    throw new Error('Enter valid discount and amount received values');
+  }
+
+  const [oldItemsResult] = await db.executeSql(
+    'SELECT product_id, quantity FROM sale_items WHERE sale_id = ?', [saleId],
+  );
+  const oldQuantities = new Map<number, number>();
+  for (let i = 0; i < oldItemsResult.rows.length; i++) {
+    const row = oldItemsResult.rows.item(i);
+    oldQuantities.set(Number(row.product_id), Number(row.quantity));
+  }
+  const newQuantities = new Map<number, number>();
+  items.forEach(item => newQuantities.set(item.product.id, item.quantity));
+
+  const [saleResult] = await db.executeSql('SELECT id FROM sales WHERE id = ?', [saleId]);
+  if (!saleResult.rows.length) throw new Error('This sale no longer exists');
+
+  // Check all added stock before changing any records.
+  for (const item of items) {
+    const added = item.quantity - (oldQuantities.get(item.product.id) || 0);
+    if (added > 0) {
+      const [stockResult] = await db.executeSql('SELECT stock FROM products WHERE id = ?', [item.product.id]);
+      const available = stockResult.rows.length ? Number(stockResult.rows.item(0).stock) : 0;
+      if (available < added) {
+        throw new Error(`Not enough stock for ${item.product.name}. Available: ${available}`);
+      }
+    }
+  }
+
+  for (const [productId, oldQuantity] of oldQuantities) {
+    const delta = (newQuantities.get(productId) || 0) - oldQuantity;
+    if (delta !== 0) {
+      await db.executeSql('UPDATE products SET stock = stock - ? WHERE id = ?', [delta, productId]);
+    }
+  }
+  for (const item of items) {
+    if (!oldQuantities.has(item.product.id)) {
+      await db.executeSql('UPDATE products SET stock = stock - ? WHERE id = ?', [item.quantity, item.product.id]);
+    }
+  }
+
+  const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0) +
+    serviceItems.reduce((sum, item) => sum + item.service.price * item.quantity, 0);
+  const roundedDiscount = Math.round(discount * 100) / 100;
+  const total = Math.round(Math.max(subtotal - roundedDiscount, 0) * 100) / 100;
+  const received = Math.round(receivedAmount * 100) / 100;
+
+  await db.executeSql('DELETE FROM sale_items WHERE sale_id = ?', [saleId]);
+  await db.executeSql('DELETE FROM sale_service_items WHERE sale_id = ?', [saleId]);
+  for (const item of items) {
+    const itemSubtotal = item.product.price * item.quantity;
+    await db.executeSql(
+      'INSERT INTO sale_items (sale_id, product_id, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?)',
+      [saleId, item.product.id, item.quantity, item.product.price, itemSubtotal],
+    );
+  }
+  for (const item of serviceItems) {
+    const itemSubtotal = item.service.price * item.quantity;
+    await db.executeSql(
+      'INSERT INTO sale_service_items (sale_id, service_id, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?)',
+      [saleId, item.service.id, item.quantity, item.service.price, itemSubtotal],
+    );
+  }
+  await db.executeSql(
+    'UPDATE sales SET total = ?, discount = ?, received_amount = ?, change_due = MAX(? - ?, 0) WHERE id = ?',
+    [total, roundedDiscount, received, received, total, saleId],
+  );
+};
+
 export const createSale = async (
   db: SQLiteDatabase,
   items: CartItem[],

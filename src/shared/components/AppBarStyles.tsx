@@ -46,6 +46,20 @@ const GetAppBarStyles = (colors: ThemeColors) => {
       justifyContent: 'center',
       alignItems: 'center',
     },
+    rightDangerButton: {
+      minWidth: 72,
+      height: 36,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.DELETE_RED,
+    },
+    rightDangerText: {
+      fontSize: fonts.FONT_SIZE_14,
+      fontWeight: '700',
+      color: colors.TEXT_WHITE,
+    },
   });
 };
 

@@ -9,6 +9,7 @@ import POSScreen from '../../features/sales/screens/POSScreen/POSScreen';
 import ReceiptScreen from '../../features/sales/screens/ReceiptScreen/ReceiptScreen';
 import DailyReportScreen from '../../features/reports/screens/DailyReportScreen/DailyReportScreen';
 import InventoryScreen from '../../features/dashboard/screens/InventoryScreen/InventoryScreen';
+import StockDetailsScreen from '../../features/dashboard/screens/StockDetailsScreen/StockDetailsScreen';
 import PrinterSettingsScreen from '../../features/settings/screens/PrinterSettingsScreen/PrinterSettingsScreen';
 import SupplierListScreen from '../../features/suppliers/screens/SupplierListScreen/SupplierListScreen';
 import SupplierFormScreen from '../../features/suppliers/screens/SupplierFormScreen/SupplierFormScreen';
@@ -37,6 +38,7 @@ const RootStackNavigator = () => {
         <Stack.Screen name="Receipt" component={ReceiptScreen} />
         <Stack.Screen name="DailyReport" component={DailyReportScreen} />
         <Stack.Screen name="Inventory" component={InventoryScreen} />
+        <Stack.Screen name="StockDetails" component={StockDetailsScreen} />
         <Stack.Screen name="PrinterSettings" component={PrinterSettingsScreen} />
         <Stack.Screen name="SupplierList" component={SupplierListScreen} />
         <Stack.Screen name="SupplierForm" component={SupplierFormScreen} />

@@ -53,6 +53,24 @@ const GetInventoryScreenStyles = (colors: ThemeColors) => {
       color: colors.TEXT_PRIMARY,
       marginBottom: 12,
     },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+      marginBottom: 12,
+    },
+    viewTransactionsBtn: {
+      backgroundColor: colors.PRIMARY_LIGHT,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 10,
+    },
+    viewTransactionsBtnText: {
+      fontSize: fonts.FONT_SIZE_12,
+      fontWeight: '700',
+      color: colors.PRIMARY,
+    },
     tableContainer: {
       backgroundColor: colors.CARD_BACKGROUND,
       borderRadius: 12,

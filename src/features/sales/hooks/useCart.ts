@@ -18,6 +18,7 @@ const useCart = () => {
     incrementService,
     decrementService,
     clear,
+    replaceCart,
     getTotal,
     getTotalItemCount,
   } = useCartStore();
@@ -72,6 +73,7 @@ const useCart = () => {
     incrementService,
     decrementService,
     clear,
+    replaceCart,
     total: getTotal(),
     totalItemCount: getTotalItemCount(),
     handleBarcodeScan,

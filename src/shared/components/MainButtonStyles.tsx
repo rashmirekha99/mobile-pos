@@ -9,12 +9,28 @@ const GetMainButtonStyles = (colors: ThemeColors) => {
       borderRadius: 12,
       overflow: 'hidden',
     },
+    compactContainer: {
+      width: 164,
+      height: 36,
+      alignSelf: 'flex-end',
+      marginTop: 8,
+      borderRadius: 9,
+      overflow: 'hidden',
+    },
     button: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 12,
       paddingHorizontal: 24,
+      overflow: 'hidden',
+    },
+    compactButton: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 9,
+      paddingHorizontal: 12,
       overflow: 'hidden',
     },
     gradient: {
@@ -31,6 +47,11 @@ const GetMainButtonStyles = (colors: ThemeColors) => {
     buttonText: {
       fontSize: fonts.FONT_SIZE_16,
       fontWeight: '600',
+      color: colors.TEXT_WHITE,
+    },
+    compactText: {
+      fontSize: fonts.FONT_SIZE_12,
+      fontWeight: '700',
       color: colors.TEXT_WHITE,
     },
     outlineButton: {

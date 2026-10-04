@@ -1,13 +1,14 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, ScrollView, Alert, BackHandler } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useNavigation,
   useRoute,
+  useFocusEffect,
   RouteProp,
-  NavigationProp,
 } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
 import RNPrint from 'react-native-print';
@@ -23,9 +24,6 @@ import {
   getSaleById,
   getSaleItems,
   getSaleServiceItems,
-  removeSaleItem,
-  removeSaleServiceItem,
-  deleteSale,
   SaleServiceItem,
 } from '../../services/salesService';
 import { RECEIPT_STORE_NAME } from '../../../../configs/Constants';
@@ -41,7 +39,7 @@ import {
 } from '../../../../shared/services/bluetoothPrinterService';
 
 const ReceiptScreen = () => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'Receipt'>>();
   const { saleId } = route.params;
 
@@ -56,11 +54,6 @@ const ReceiptScreen = () => {
   const [svcItems, setSvcItems] = useState<Array<SaleServiceItem & { service_name: string }>>(
     [],
   );
-  const [editMode, setEditMode] = useState(false);
-
-  useEffect(() => {
-    loadReceipt();
-  }, [saleId]);
 
   const loadReceipt = async () => {
     try {
@@ -78,92 +71,6 @@ const ReceiptScreen = () => {
     } catch (error) {
       console.error('Failed to load receipt:', error);
     }
-  };
-
-  const handleRemoveItem = (item: SaleItem & { product_name: string }) => {
-    Alert.alert(
-      'Remove Item',
-      `Remove "${item.product_name}" (x${item.quantity}) from this sale?\n\nStock will be restored.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const db = await getDatabase();
-              const saleStillExists = await removeSaleItem(db, saleId, item.id);
-              if (!saleStillExists) {
-                Alert.alert('Sale Deleted', 'All items removed. Sale has been deleted.', [
-                  { text: 'OK', onPress: () => navigation.navigate('Dashboard') },
-                ]);
-              } else {
-                await loadReceipt();
-              }
-            } catch (error) {
-              console.error('Failed to remove item:', error);
-              Alert.alert('Error', 'Failed to remove item');
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  const handleRemoveServiceItem = (item: SaleServiceItem & { service_name: string }) => {
-    Alert.alert(
-      'Remove Service',
-      `Remove "${item.service_name}" (x${item.quantity}) from this sale?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const db = await getDatabase();
-              const saleStillExists = await removeSaleServiceItem(db, saleId, item.id);
-              if (!saleStillExists) {
-                Alert.alert('Sale Deleted', 'All items removed. Sale has been deleted.', [
-                  { text: 'OK', onPress: () => navigation.navigate('Dashboard') },
-                ]);
-              } else {
-                await loadReceipt();
-              }
-            } catch (error) {
-              console.error('Failed to remove service item:', error);
-              Alert.alert('Error', 'Failed to remove item');
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  const handleDeleteSale = () => {
-    Alert.alert(
-      'Delete Sale',
-      'Are you sure you want to delete this entire sale?\n\nAll stock will be restored.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const db = await getDatabase();
-              await deleteSale(db, saleId);
-              Alert.alert('Deleted', 'Sale has been deleted.', [
-                { text: 'OK', onPress: () => navigation.navigate('Dashboard') },
-              ]);
-            } catch (error) {
-              console.error('Failed to delete sale:', error);
-              Alert.alert('Error', 'Failed to delete sale');
-            }
-          },
-        },
-      ],
-    );
   };
 
   const handleShare = async () => {
@@ -315,6 +222,27 @@ const ReceiptScreen = () => {
     }
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      loadReceipt();
+      const hardwareBackSubscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => true,
+      );
+      const removeBackListener = navigation.addListener('beforeRemove', event => {
+        const actionType = event.data.action.type;
+        if (actionType === 'GO_BACK' || actionType === 'POP' || actionType === 'POP_TO_TOP') {
+          event.preventDefault();
+        }
+      });
+
+      return () => {
+        hardwareBackSubscription.remove();
+        removeBackListener();
+      };
+    }, [navigation, saleId]),
+  );
+
   const handleNewSale = () => {
     navigation.navigate('POS');
   };
@@ -348,97 +276,36 @@ const ReceiptScreen = () => {
         onRightPress={handleShare}
       />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {!editMode ? (
-          <View
-            style={{
-              marginHorizontal: 8,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: colors.RECEIPT_BORDER,
-              overflow: 'hidden',
-            }}>
-            <ViewShot
-              ref={viewShotRef}
-              options={{ format: 'png', quality: 1.0 }}>
-              <ReceiptView sale={sale} items={items} serviceItems={svcItems} />
-            </ViewShot>
-          </View>
-        ) : (
-          <View style={styles.editContainer}>
-            <Text style={styles.editTitle}>Edit Sale #{sale.id}</Text>
-            <Text style={styles.editHint}>
-              Tap the X button to remove an item. Stock will be restored.
-            </Text>
-            {items.map((item) => (
-              <View key={`p-${item.id}`} style={styles.editItemRow}>
-                <View style={styles.editItemInfo}>
-                  <Text style={styles.editItemName} numberOfLines={1}>
-                    {item.product_name}
-                  </Text>
-                  <Text style={styles.editItemDetail}>
-                    x{item.quantity} - {formatCurrency(item.subtotal)}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.removeItemButton}
-                  onPress={() => handleRemoveItem(item)}>
-                  <Text style={styles.removeItemButtonText}>X</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-            {svcItems.map((item) => (
-              <View key={`s-${item.id}`} style={styles.editItemRow}>
-                <View style={styles.editItemInfo}>
-                  <Text style={styles.editItemName} numberOfLines={1}>
-                    {item.service_name}
-                  </Text>
-                  <Text style={styles.editItemDetail}>
-                    x{item.quantity} - {formatCurrency(item.subtotal)}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.removeItemButton}
-                  onPress={() => handleRemoveServiceItem(item)}>
-                  <Text style={styles.removeItemButtonText}>X</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-            <View style={styles.editTotalRow}>
-              <Text style={styles.editTotalLabel}>Total</Text>
-              <Text style={styles.editTotalValue}>{formatCurrency(sale.total)}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.deleteSaleButton}
-              onPress={handleDeleteSale}>
-              <Text style={styles.deleteSaleButtonText}>Delete Entire Sale</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
+        <View
+          style={{
+            marginHorizontal: 8,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.RECEIPT_BORDER,
+            overflow: 'hidden',
+          }}>
+          <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1.0 }}>
+            <ReceiptView sale={sale} items={items} serviceItems={svcItems} />
+          </ViewShot>
+        </View>
         <View style={styles.printRow}>
-          {!editMode && (
-            <MainButton title="Print Receipt" onPress={handlePrint} />
-          )}
+          <MainButton title="Print Receipt" onPress={handlePrint} />
         </View>
 
         <View style={styles.buttonRow}>
           <View style={styles.buttonWrapper}>
             <MainButton
-              title={editMode ? 'Done Editing' : 'Edit Sale'}
-              onPress={() => setEditMode(!editMode)}
-              outline={!editMode}
+              title="Edit Sale"
+              onPress={() => navigation.push('POS', { editSaleId: sale.id })}
+              outline
             />
           </View>
-          {!editMode && (
-            <>
-              <View style={styles.buttonWrapper}>
-                <MainButton title="New Sale" onPress={handleNewSale} />
-              </View>
-              <View style={styles.buttonWrapper}>
-                <MainButton title="Done" onPress={handleDone} outline />
-              </View>
-            </>
-          )}
+          <View style={styles.buttonWrapper}>
+            <MainButton title="New Sale" onPress={handleNewSale} />
+          </View>
+          <View style={styles.buttonWrapper}>
+            <MainButton title="Done" onPress={handleDone} outline />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

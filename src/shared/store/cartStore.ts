@@ -4,6 +4,7 @@ import { CartItem, Product, Service, ServiceCartItem } from '../types';
 interface CartState {
   items: CartItem[];
   serviceItems: ServiceCartItem[];
+  replaceCart: (items: CartItem[], serviceItems: ServiceCartItem[]) => void;
   addItem: (product: Product) => void;
   removeItem: (productId: number) => void;
   increment: (productId: number) => void;
@@ -20,6 +21,8 @@ interface CartState {
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
   serviceItems: [],
+
+  replaceCart: (items, serviceItems) => set({ items, serviceItems }),
 
   addItem: (product) =>
     set((state) => {

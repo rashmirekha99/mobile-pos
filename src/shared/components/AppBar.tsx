@@ -11,7 +11,9 @@ const APPBAR_GRADIENT = ['#02078A', '#010450', '#01022E'];
 const APPBAR_GRADIENT_LOCATIONS = [0, 0.55, 1];
 
 interface RightAction {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
+  label?: string;
+  destructive?: boolean;
   onPress: () => void;
 }
 
@@ -80,9 +82,11 @@ const AppBar = ({
               {rightActions.map((action, i) => (
                 <TouchableOpacity
                   key={i}
-                  style={styles.rightButton}
+                  style={action.destructive ? styles.rightDangerButton : styles.rightButton}
                   onPress={action.onPress}>
-                  {action.icon}
+                  {action.destructive ? (
+                    <Text style={styles.rightDangerText}>{action.label}</Text>
+                  ) : action.icon}
                 </TouchableOpacity>
               ))}
             </View>

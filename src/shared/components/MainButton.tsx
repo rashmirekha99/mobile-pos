@@ -12,23 +12,26 @@ interface MainButtonProps {
   onPress: () => void;
   disabled?: boolean;
   outline?: boolean;
+  danger?: boolean;
+  compact?: boolean;
 }
 
-const MainButton = ({ title, onPress, disabled = false, outline = false }: MainButtonProps) => {
+const MainButton = ({ title, onPress, disabled = false, outline = false, danger = false, compact = false }: MainButtonProps) => {
   const { colors } = useTheme();
   const styles = GetMainButtonStyles(colors);
 
   return (
-    <View style={styles.container}>
+    <View style={compact ? styles.compactContainer : styles.container}>
       <Pressable
         style={({ pressed }) => [
-          outline ? styles.outlineButton : styles.button,
+          compact ? styles.compactButton : outline ? styles.outlineButton : styles.button,
+          danger && { backgroundColor: colors.DELETE_RED, borderColor: colors.DELETE_RED },
           disabled && styles.buttonDisabled,
           { opacity: pressed ? 0.85 : 1 },
         ]}
         onPress={onPress}
         disabled={disabled}>
-        {!outline && !disabled && (
+        {!outline && !disabled && !danger && (
           <LinearGradient
             colors={GRADIENT_COLORS}
             locations={GRADIENT_LOCATIONS}
@@ -37,7 +40,7 @@ const MainButton = ({ title, onPress, disabled = false, outline = false }: MainB
             style={styles.gradient}
           />
         )}
-        <Text style={outline ? styles.outlineText : styles.buttonText}>
+        <Text style={compact ? styles.compactText : danger ? styles.buttonText : outline ? styles.outlineText : styles.buttonText}>
           {title}
         </Text>
       </Pressable>
