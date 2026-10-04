@@ -112,6 +112,22 @@ export const getDatabase = async (): Promise<SQLiteDatabase> => {
     // Column already exists
   }
 
+  // Migration: record customer payment and cash change on each sale
+  try {
+    await dbInstance.executeSql(
+      'ALTER TABLE sales ADD COLUMN received_amount REAL NOT NULL DEFAULT 0',
+    );
+  } catch (_) {
+    // Column already exists
+  }
+  try {
+    await dbInstance.executeSql(
+      'ALTER TABLE sales ADD COLUMN change_due REAL NOT NULL DEFAULT 0',
+    );
+  } catch (_) {
+    // Column already exists
+  }
+
   // Migration: services table
   await dbInstance.executeSql(`
     CREATE TABLE IF NOT EXISTS services (

@@ -47,6 +47,8 @@ import { formatCurrency } from '../../../../shared/utils/format';
 const GRADIENT_COLORS = ['#02078A', '#010450', '#01022E'];
 const GRADIENT_LOCATIONS = [0, 0.55, 1];
 const BARCODE_TYPES: BarcodeType[] = ['QR', 'EAN13', 'CODE128'];
+// Set to true to show the thermal/normal printer chooser again.
+const SHOW_PRINT_METHOD_CHOOSER = false;
 
 const ProductFormScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -257,7 +259,7 @@ const ProductFormScreen = () => {
     const base64 = await captureBarcode();
     if (!base64) return;
 
-    if (thermalConnected && isPrinterConnected()) {
+    if (SHOW_PRINT_METHOD_CHOOSER && thermalConnected && isPrinterConnected()) {
       Alert.alert('Print Method', 'Choose how to print the barcode:', [
         {
           text: 'Thermal Printer',
@@ -283,13 +285,19 @@ const ProductFormScreen = () => {
         },
         { text: 'Cancel', style: 'cancel' },
       ]);
-    } else {
+    } else if (SHOW_PRINT_METHOD_CHOOSER) {
       try {
         await handleNormalPrint(base64, copies);
       } catch (error: any) {
         if (error?.message !== 'User cancelled') {
           Alert.alert('Print Error', 'Failed to print barcode');
         }
+      }
+    } else {
+      try {
+        await handleThermalPrint(base64, copies);
+      } catch {
+        Alert.alert('Print Error', 'Failed to print to thermal printer');
       }
     }
   };

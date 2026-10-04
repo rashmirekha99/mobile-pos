@@ -15,6 +15,7 @@ export const createSale = async (
   items: CartItem[],
   serviceItems: ServiceCartItem[] = [],
   discount: number = 0,
+  receivedAmount: number = 0,
 ): Promise<number> => {
   const productSubtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
@@ -24,11 +25,16 @@ export const createSale = async (
     (sum, item) => sum + item.service.price * item.quantity,
     0,
   );
-  const total = Math.max(productSubtotal + serviceSubtotal - discount, 0);
+  const total = Math.round(Math.max(productSubtotal + serviceSubtotal - discount, 0) * 100) / 100;
+  const roundedReceivedAmount = Math.round(receivedAmount * 100) / 100;
+  if (!Number.isFinite(roundedReceivedAmount) || roundedReceivedAmount < total) {
+    throw new Error('Received amount must cover the sale total');
+  }
+  const changeDue = Math.round((roundedReceivedAmount - total) * 100) / 100;
 
   const [saleResult] = await db.executeSql(
-    'INSERT INTO sales (total, discount) VALUES (?, ?)',
-    [total, discount],
+    'INSERT INTO sales (total, discount, received_amount, change_due) VALUES (?, ?, ?, ?)',
+    [total, discount, roundedReceivedAmount, changeDue],
   );
 
   const saleId = saleResult.insertId;
@@ -160,7 +166,10 @@ const recalcSaleTotal = async (
     return false; // sale deleted
   }
 
-  await db.executeSql('UPDATE sales SET total = ? WHERE id = ?', [newTotal, saleId]);
+  await db.executeSql(
+    'UPDATE sales SET total = ?, change_due = MAX(received_amount - ?, 0) WHERE id = ?',
+    [newTotal, newTotal, saleId],
+  );
   return true; // sale still exists
 };
 

@@ -22,6 +22,12 @@ const GetBarcodeDisplayStyles = (colors: ThemeColors) => {
       textAlign: 'center',
       fontWeight: '500',
     },
+    productName: {
+      fontSize: fonts.FONT_SIZE_12,
+      color: '#000000',
+      textAlign: 'center',
+      fontWeight: '600',
+    },
     priceText: {
       marginTop: 2,
       fontSize: fonts.FONT_SIZE_14,

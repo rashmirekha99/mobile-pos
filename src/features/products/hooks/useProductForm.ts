@@ -17,7 +17,7 @@ const useProductForm = (productId?: number) => {
   const [supplierId, setSupplierId] = useState<number | null>(null);
   const [sku, setSku] = useState('');
   const [barcode, setBarcode] = useState('');
-  const [barcodeType, setBarcodeType] = useState<BarcodeType>('CODE128');
+  const [barcodeType, setBarcodeType] = useState<BarcodeType>('EAN13');
   const [stock, setStock] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);

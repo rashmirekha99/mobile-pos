@@ -59,10 +59,27 @@ const BarcodeDisplay = ({ value, type, size = 150, label, price, labelSizeMm }: 
 
   return (
     <View style={[styles.container, labelContainerStyle]}>
+      {labelSizeMm && (
+        <Text style={{ color: '#000000', fontSize: 6, lineHeight: 7, marginBottom: 1, textAlign: 'center', fontWeight: '700' }}>
+          NRC Baggage
+        </Text>
+      )}
+      {!!label?.trim() && (
+        <Text
+          numberOfLines={labelSizeMm ? 1 : undefined}
+          ellipsizeMode="tail"
+          style={[
+            styles.productName,
+            labelSizeMm && { width: labelWidth - 10, fontSize: 7, lineHeight: 8, marginBottom: 1, fontWeight: '700' },
+          ]}
+        >
+          {label.trim()}
+        </Text>
+      )}
       {renderBarcode()}
-      <Text style={[styles.barcodeValue, labelSizeMm && { fontSize: 7, marginTop: 1, lineHeight: 8 }]}>{value}</Text>
+      <Text style={[styles.barcodeValue, labelSizeMm && { fontSize: 7, marginTop: 1, lineHeight: 8, fontWeight: '700' }]}>{value}</Text>
       {parsedPrice > 0 && (
-        <Text style={[styles.priceText, labelSizeMm && { fontSize: 8, marginTop: 1, lineHeight: 9 }]}>{formatCurrency(parsedPrice)}</Text>
+        <Text style={[styles.priceText, labelSizeMm && { fontSize: 10, marginTop: 1, lineHeight: 11, fontWeight: '700' }]}>{formatCurrency(parsedPrice)}</Text>
       )}
     </View>
   );

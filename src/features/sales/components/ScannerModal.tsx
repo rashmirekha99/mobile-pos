@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, Linking, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Modal, Linking, Alert, NativeModules } from 'react-native';
 import {
   Camera,
   useCameraDevice,
@@ -82,6 +82,11 @@ const ScannerModal = ({ visible, onClose, onScanned }: ScannerModalProps) => {
           isScanningRef.current = false;
           const value = codes[0].value;
           if (value) {
+            try {
+              NativeModules.RNBLEPrinter?.playBarcodeBeep?.();
+            } catch {
+              // Keep barcode scanning working if the native beep is unavailable.
+            }
             onScanned(value);
             onClose();
           }

@@ -215,8 +215,9 @@ if (fs.existsSync(tsplAdapterPath)) {
       '            String gapText = String.format(Locale.US, "%.2f", gapMm);',
       '            String header = "SIZE " + widthText + " mm," + heightText + " mm\\r\\n"',
       '                    + "GAP " + gapText + " mm,0 mm\\r\\n"',
+      '                    + "DENSITY 9\\r\\n"',
       '                    + "CLS\\r\\n"',
-      '                    + "BITMAP 10,0," + bytesPerRow + "," + height + ",0,";',
+      '                    + "BITMAP 0,0," + bytesPerRow + "," + height + ",0,";',
       '            OutputStream output = this.mBluetoothSocket.getOutputStream();',
       '            output.write(header.getBytes(StandardCharsets.US_ASCII));',
       '            output.write(bitmap);',
@@ -232,6 +233,21 @@ if (fs.existsSync(tsplAdapterPath)) {
     content = content.replace(/\n}\s*$/, '\n' + method + '\n}\n');
     fs.writeFileSync(tsplAdapterPath, content, 'utf8');
   }
+}
+// Keep the horizontal label offset aligned with the current printer calibration.
+if (fs.existsSync(tsplAdapterPath)) {
+  let content = fs.readFileSync(tsplAdapterPath, 'utf8');
+  const adjusted = content
+    .replace('"BITMAP 10,0,"', '"BITMAP 2,0,"')
+    .replace('"BITMAP 6,0,"', '"BITMAP 2,0,"');
+  let updated = adjusted
+    .replace('"BITMAP 2,0,"', '"BITMAP 0,0,"')
+    .replace('int pixel = pixels[y][Math.min(width - 1, x + 2)];', 'int pixel = pixels[y][x];');
+  const densityLine = '                    + "DENSITY 9\\r\\n"\n';
+  if (!updated.includes(densityLine)) {
+    updated = updated.replace('                    + "CLS\\r\\n"', densityLine + '                    + "CLS\\r\\n"');
+  }
+  if (updated !== content) fs.writeFileSync(tsplAdapterPath, updated, 'utf8');
 }
 const tsplModulePath = path.join(
   __dirname, '..', 'node_modules',
@@ -253,6 +269,30 @@ if (fs.existsSync(tsplModulePath)) {
     ].join('\n');
     const marker = '    @ReactMethod\n    public void connectPrinter(String innerAddress, Callback successCallback, Callback errorCallback) {';
     if (!content.includes(marker)) throw new Error('TSPL module insertion marker not found');
+    content = content.replace(marker, method + marker);
+    fs.writeFileSync(tsplModulePath, content, 'utf8');
+  }
+  if (!content.includes('public void playBarcodeBeep()')) {
+    const imports = [
+      ['import android.media.AudioManager;', 'import android.graphics.BitmapFactory;'],
+      ['import android.media.ToneGenerator;', 'import android.media.AudioManager;'],
+      ['import android.os.Handler;', 'import android.media.ToneGenerator;'],
+      ['import android.os.Looper;', 'import android.os.Handler;'],
+    ];
+    for (const [newImport, afterImport] of imports) {
+      if (!content.includes(newImport)) content = content.replace(afterImport, `${afterImport}\n${newImport}`);
+    }
+    const method = [
+      '    @ReactMethod',
+      '    public void playBarcodeBeep() {',
+      '        ToneGenerator tone = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);',
+      '        tone.startTone(ToneGenerator.TONE_PROP_BEEP, 120);',
+      '        new Handler(Looper.getMainLooper()).postDelayed(tone::release, 250);',
+      '    }',
+      '',
+    ].join('\n');
+    const marker = '    @ReactMethod\n    public void connectPrinter(String innerAddress, Callback successCallback, Callback errorCallback) {';
+    if (!content.includes(marker)) throw new Error('Barcode beep insertion marker not found');
     content = content.replace(marker, method + marker);
     fs.writeFileSync(tsplModulePath, content, 'utf8');
   }

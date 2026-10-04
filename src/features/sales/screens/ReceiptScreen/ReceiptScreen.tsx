@@ -28,8 +28,11 @@ import {
   deleteSale,
   SaleServiceItem,
 } from '../../services/salesService';
-import { STORE_NAME } from '../../../../configs/Constants';
+import { RECEIPT_STORE_NAME } from '../../../../configs/Constants';
 import { formatCurrency, formatDate, formatTime } from '../../../../shared/utils/format';
+
+// Set to true to show the thermal/normal printer chooser again.
+const SHOW_PRINT_METHOD_CHOOSER = false;
 import RNFS from 'react-native-fs';
 import { usePrinterStore } from '../../../../shared/store/printerStore';
 import {
@@ -206,7 +209,10 @@ const ReceiptScreen = () => {
       html: `
         <html>
         <body style="font-family:monospace; max-width:320px; margin:0 auto; padding:6px 12px 28px;">
-          <h2 style="text-align:center; margin:0 0 2px;">${STORE_NAME}</h2>
+          <h2 style="text-align:center; margin:0 0 2px;">${RECEIPT_STORE_NAME}</h2>
+          <p style="text-align:center; color:#000; font-size:10px; font-weight:bold; margin:0 0 2px;">No 193/19/A-1 Bandaranayakapura,Mattegoda</p>
+          <p style="text-align:center; color:#000; font-size:10px; font-weight:bold; margin:0 0 2px;">Website: www.nrcbaggage.lk</p>
+          <p style="text-align:center; color:#000; font-size:10px; font-weight:bold; margin:0 0 2px;">Tel No: 0789793957</p>
           <p style="text-align:center; color:#666; margin:2px 0;">Sales Receipt</p>
           <p style="text-align:center; color:#000; font-weight:600; font-size:12px; white-space:nowrap; margin:2px 0;">Date: ${formatDate(sale.created_at)} &nbsp; Time: ${formatTime(sale.created_at)}</p>
           <p style="text-align:center; color:#999; margin:2px 0 6px;">Receipt #${sale.id}</p>
@@ -234,6 +240,16 @@ const ReceiptScreen = () => {
             <span>TOTAL</span>
             <span>${formatCurrency(sale.total)}</span>
           </div>
+          ${sale.received_amount > 0 ? `
+          <div style="display:flex; justify-content:space-between; padding:2px 0; font-size:12px;">
+            <span>Amount Received</span>
+            <span>${formatCurrency(sale.received_amount)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:2px 0; font-size:12px; font-weight:bold;">
+            <span>Change</span>
+            <span>${formatCurrency(sale.change_due)}</span>
+          </div>
+          ` : ''}
           <hr style="border:none; border-top:1px dashed #999; margin:4px 0;" />
           <p style="text-align:center; margin:6px 0 0; font-size:14px; font-weight:bold;">Thank You!</p>
           <p style="text-align:center; color:#000; font-size:12px; font-weight:bold; margin:2px 0 24px;">Please come again</p>
@@ -257,33 +273,44 @@ const ReceiptScreen = () => {
   const handlePrint = async () => {
     if (!sale) return;
 
-    if (thermalConnected && isPrinterConnected()) {
-      Alert.alert('Print Method', 'Choose how to print the receipt:', [
-        {
-          text: 'Thermal Printer',
-          onPress: handleThermalPrint,
-        },
-        {
-          text: 'Normal Print',
-          onPress: async () => {
-            try {
-              await handleNormalPrint();
-            } catch (error: any) {
-              if (error?.message !== 'User cancelled') {
-                Alert.alert('Print Error', 'Failed to print receipt');
-              }
-            }
+    if (SHOW_PRINT_METHOD_CHOOSER) {
+      if (thermalConnected && isPrinterConnected()) {
+        Alert.alert('Print Method', 'Choose how to print the receipt:', [
+          {
+            text: 'Thermal Printer',
+            onPress: handleThermalPrint,
           },
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
-    } else {
-      try {
-        await handleNormalPrint();
-      } catch (error: any) {
-        if (error?.message !== 'User cancelled') {
-          Alert.alert('Print Error', 'Failed to print receipt');
+          {
+            text: 'Normal Print',
+            onPress: async () => {
+              try {
+                await handleNormalPrint();
+              } catch (error: any) {
+                if (error?.message !== 'User cancelled') {
+                  Alert.alert('Print Error', 'Failed to print receipt');
+                }
+              }
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ]);
+      } else {
+        try {
+          await handleNormalPrint();
+        } catch (error: any) {
+          if (error?.message !== 'User cancelled') {
+            Alert.alert('Print Error', 'Failed to print receipt');
+          }
         }
+      }
+      return;
+    }
+
+    {
+      try {
+        await handleThermalPrint();
+      } catch {
+        Alert.alert('Print Error', 'Failed to print to thermal printer');
       }
     }
   };

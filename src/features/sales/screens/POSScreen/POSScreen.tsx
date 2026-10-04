@@ -59,6 +59,7 @@ const POSScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [discountInput, setDiscountInput] = useState('');
+  const [receivedAmountInput, setReceivedAmountInput] = useState('');
   const [services, setServices] = useState<Service[]>([]);
   const [servicePickerVisible, setServicePickerVisible] = useState(false);
   const [serviceSearch, setServiceSearch] = useState('');
@@ -116,6 +117,15 @@ const POSScreen = () => {
 
   const discount = parseFloat(discountInput) || 0;
   const finalTotal = Math.max(total - discount, 0);
+  const parsedReceivedAmount = Number.parseFloat(receivedAmountInput);
+  const receivedAmount = Number.isFinite(parsedReceivedAmount)
+    ? Math.round(parsedReceivedAmount * 100) / 100
+    : 0;
+  const roundedFinalTotal = Math.round(finalTotal * 100) / 100;
+  const changeOrBalance = receivedAmount >= roundedFinalTotal
+    ? receivedAmount - roundedFinalTotal
+    : roundedFinalTotal - receivedAmount;
+  const changeLabel = receivedAmount >= roundedFinalTotal ? 'Change Due' : 'Balance Due';
 
   // Build unified list for FlatList
   const unifiedItems: UnifiedCartItem[] = [
@@ -129,18 +139,25 @@ const POSScreen = () => {
       return;
     }
 
-    const msg = discount > 0
-      ? `Subtotal: ${formatCurrency(total)}\nDiscount: -${formatCurrency(discount)}\nTotal: ${formatCurrency(finalTotal)}\n\nProceed with checkout?`
-      : `Total: ${formatCurrency(total)}\n\nProceed with checkout?`;
+    if (receivedAmount < roundedFinalTotal) {
+      Alert.alert(
+        'Insufficient Payment',
+        `Enter an amount received that is at least ${formatCurrency(roundedFinalTotal)}.`,
+      );
+      return;
+    }
+
+    const msg = `${discount > 0 ? `Subtotal: ${formatCurrency(total)}\nDiscount: -${formatCurrency(discount)}\n` : ''}Total: ${formatCurrency(roundedFinalTotal)}\nReceived: ${formatCurrency(receivedAmount)}\nChange: ${formatCurrency(receivedAmount - roundedFinalTotal)}\n\nProceed with checkout?`;
 
     Alert.alert('Confirm Checkout', msg, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Confirm',
         onPress: async () => {
-          const saleId = await handleCheckout(discount);
+          const saleId = await handleCheckout(discount, receivedAmount);
           if (saleId) {
             setDiscountInput('');
+            setReceivedAmountInput('');
             navigation.navigate('Receipt', { saleId });
           }
         },
@@ -271,7 +288,7 @@ const POSScreen = () => {
           </View>
         )}
         <View style={styles.discountRow}>
-          <Text style={styles.discountLabel}>Discount</Text>
+          <Text style={styles.discountLabel}>Discount (Rs.)</Text>
           <TextInput
             style={styles.discountInput}
             placeholder="0.00"
@@ -284,6 +301,23 @@ const POSScreen = () => {
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.totalAmount}>{formatCurrency(finalTotal)}</Text>
+        </View>
+        <View style={styles.paymentSection}>
+          <View style={styles.paymentInputRow}>
+            <Text style={styles.paymentInputLabel}>Cash Received</Text>
+            <TextInput
+              style={styles.paymentInput}
+              placeholder="Enter amount"
+              placeholderTextColor={colors.INPUT_PLACEHOLDER}
+              value={receivedAmountInput}
+              onChangeText={(value) => setReceivedAmountInput(value.replace(/[^0-9.]/g, ''))}
+              keyboardType="decimal-pad"
+            />
+          </View>
+          <View style={styles.changeRow}>
+            <Text style={styles.changeLabel}>{changeLabel}</Text>
+            <Text style={styles.changeAmount}>{formatCurrency(changeOrBalance)}</Text>
+          </View>
         </View>
         <MainButton
           title="Checkout"

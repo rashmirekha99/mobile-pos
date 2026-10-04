@@ -20,6 +20,12 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
       fontWeight: '700',
       color: colors.TEXT_PRIMARY,
     },
+    storeAddress: {
+      fontSize: fonts.FONT_SIZE_10,
+      color: '#000000',
+      fontWeight: '700',
+      marginTop: 1,
+    },
     receiptTitle: {
       fontSize: fonts.FONT_SIZE_14,
       color: colors.TEXT_SECONDARY,
@@ -109,6 +115,25 @@ const GetReceiptViewStyles = (colors: ThemeColors) => {
       fontSize: fonts.FONT_SIZE_20,
       fontWeight: '800',
       color: colors.PRIMARY,
+    },
+    paymentRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 2,
+    },
+    paymentLabel: {
+      fontSize: fonts.FONT_SIZE_12,
+      color: colors.TEXT_SECONDARY,
+    },
+    paymentAmount: {
+      fontSize: fonts.FONT_SIZE_12,
+      color: colors.TEXT_PRIMARY,
+    },
+    paymentChange: {
+      fontSize: fonts.FONT_SIZE_12,
+      fontWeight: '700',
+      color: colors.TEXT_PRIMARY,
     },
     footer: {
       alignItems: 'center',

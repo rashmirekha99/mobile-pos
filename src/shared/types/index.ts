@@ -24,6 +24,8 @@ export interface Sale {
   id: number;
   total: number;
   discount: number;
+  received_amount: number;
+  change_due: number;
   created_at: string;
 }
 
