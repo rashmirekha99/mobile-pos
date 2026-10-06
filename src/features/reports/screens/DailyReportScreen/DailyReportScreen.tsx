@@ -187,6 +187,10 @@ const DailyReportScreen = () => {
 
     return `
       <html>
+      <head><style>
+        table th, table td { border-right:1px solid #ddd; }
+        table th:last-child, table td:last-child { border-right:none; }
+      </style></head>
       <body style="font-family:sans-serif; max-width:700px; margin:0 auto; padding:20px;">
         <h2 style="text-align:center; margin-bottom:2px;">${STORE_NAME}</h2>
         <h3 style="text-align:center; color:#666; margin-top:4px;">Sales Report</h3>

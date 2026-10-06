@@ -320,7 +320,9 @@ const StockDetailsScreen = () => {
         </div>` : ''}
       </body>
       <style>
-        th,td { padding:8px 6px; border-bottom:1px solid #ddd; }
+        th,td { padding:8px 6px; border-bottom:1px solid #ddd; border-right:1px solid #ddd; }
+        th:last-child, td:last-child { border-right:none; }
+        thead tr { border-bottom:2px solid #ddd; }
         .row-number { text-align:center; width:36px; }
         .number { text-align:right; white-space:nowrap; }
         .qty { text-align:center; }
