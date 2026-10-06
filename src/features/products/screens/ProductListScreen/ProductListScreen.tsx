@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -37,24 +38,33 @@ const ProductListScreen = () => {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const loadProducts = useCallback(async () => {
+  const loadProducts = useCallback(async (query?: string) => {
+    setIsLoading(true);
     try {
       const db = await getDatabase();
-      const data = searchQuery.trim()
-        ? await searchProducts(db, searchQuery.trim())
+      const trimmed = (query ?? searchQuery).trim();
+      const data = trimmed
+        ? await searchProducts(db, trimmed)
         : await getAllProducts(db);
       setProducts(data);
     } catch (error) {
       console.error('Failed to load products:', error);
+    } finally {
+      setIsLoading(false);
     }
   }, [searchQuery]);
 
   useFocusEffect(
     useCallback(() => {
       loadProducts();
-    }, [loadProducts]),
+    }, []),
   );
+
+  useEffect(() => {
+    loadProducts(searchQuery);
+  }, [searchQuery]);
 
   const handleDelete = (product: Product) => {
     Alert.alert(
@@ -113,7 +123,9 @@ const ProductListScreen = () => {
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No products found</Text>
+          isLoading
+            ? <ActivityIndicator style={{ marginTop: 40 }} color={colors.PRIMARY} />
+            : <Text style={styles.emptyText}>No products found</Text>
         }
       />
       <TouchableOpacity

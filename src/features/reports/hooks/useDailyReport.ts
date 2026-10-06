@@ -1,44 +1,41 @@
 import { useState, useCallback } from 'react';
-import { Sale, SalesSummary } from '../../../shared/types';
+import { SalesSummary } from '../../../shared/types';
 import { getDatabase } from '../../../shared/db/database';
-import { getDailySummary } from '../services/reportService';
-import { getSalesByDate } from '../../sales/services/salesService';
+import { getDateRangeSummary } from '../services/reportService';
 import { getTodayDateString } from '../../../shared/utils/format';
 
 const useDailyReport = () => {
-  const [date, setDate] = useState(getTodayDateString());
+  const [fromDate, setFromDate] = useState(getTodayDateString());
+  const [toDate, setToDate] = useState(getTodayDateString());
   const [summary, setSummary] = useState<SalesSummary>({
     totalSales: 0,
     totalTransactions: 0,
     totalProfit: 0,
     items: [],
   });
-  const [sales, setSales] = useState<Array<Sale & { item_count: number }>>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const loadReport = useCallback(async (reportDate?: string) => {
-    const targetDate = reportDate || date;
+  const loadReport = useCallback(async (from?: string, to?: string) => {
+    const targetFrom = from || fromDate;
+    const targetTo = to || toDate;
     setIsLoading(true);
     try {
       const db = await getDatabase();
-      const [data, salesData] = await Promise.all([
-        getDailySummary(db, targetDate),
-        getSalesByDate(db, targetDate),
-      ]);
+      const data = await getDateRangeSummary(db, targetFrom, targetTo);
       setSummary(data);
-      setSales(salesData);
     } catch (error) {
       console.error('Failed to load report:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [date]);
+  }, [fromDate, toDate]);
 
   return {
-    date,
-    setDate,
+    fromDate,
+    setFromDate,
+    toDate,
+    setToDate,
     summary,
-    sales,
     isLoading,
     loadReport,
   };

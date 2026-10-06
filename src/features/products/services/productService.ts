@@ -139,3 +139,16 @@ export const getLowStockProducts = async (
   }
   return products;
 };
+
+export const getOutOfStockProducts = async (
+  db: SQLiteDatabase,
+): Promise<Product[]> => {
+  const [results] = await db.executeSql(
+    'SELECT * FROM products WHERE stock <= 0 ORDER BY name ASC',
+  );
+  const products: Product[] = [];
+  for (let i = 0; i < results.rows.length; i++) {
+    products.push(results.rows.item(i));
+  }
+  return products;
+};

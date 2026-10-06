@@ -125,7 +125,7 @@ type ActionItem = {
 
 const ACTION_ITEMS: ActionItem[] = [
   { title: 'Products', subtitle: 'Manage items', icon: (c) => <ProductsIcon color={c} />, screen: 'ProductList' },
-  { title: 'Daily Report', subtitle: 'View analytics', icon: (c) => <ChartIcon color={c} />, screen: 'DailyReport' },
+  { title: 'Sales Report', subtitle: 'View analytics', icon: (c) => <ChartIcon color={c} />, screen: 'DailyReport' },
   { title: 'Inventory', subtitle: 'Stock level', icon: (c) => <InventoryIcon color={c} />, screen: 'Inventory' },
   { title: 'Services', subtitle: 'Manage services', icon: (c) => <ServiceIcon color={c} />, screen: 'ServiceList' },
   { title: 'Service Report', subtitle: 'Service sales', icon: (c) => <ServiceReportIcon color={c} />, screen: 'ServiceReport' },
@@ -134,14 +134,12 @@ const ACTION_ITEMS: ActionItem[] = [
   { title: 'Settings', subtitle: 'General settings', icon: (c) => <SettingsIcon color={c} />, screen: 'GeneralSettings' },
 ];
 
-const LOW_STOCK_THRESHOLD = 25;
-
 const DashboardScreen = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = GetDashboardScreenStyles(colors);
-  const { todaySales, todayCount, lowStockItems, loadDashboard } = useDashboard();
+  const { todaySales, todayCount, outOfStockItems, loadDashboard } = useDashboard();
 
   useFocusEffect(
     useCallback(() => {
@@ -260,49 +258,35 @@ const DashboardScreen = () => {
           ))}
         </View>
 
-        {/* Low Stock Alert */}
-        {lowStockItems.length > 0 && (
+        {/* Out of Stock Alert */}
+        {outOfStockItems.length > 0 && (
           <View style={styles.alertSection}>
             <View style={styles.alertHeader}>
               <View style={styles.alertIconBox}>
                 <WarningIcon color={colors.ERROR} />
               </View>
-              <Text style={styles.alertTitle}>Low stock alert</Text>
+              <Text style={styles.alertTitle}>Out of stock</Text>
             </View>
-            {lowStockItems.map((item, index) => {
-              const barPercent = Math.min(
-                (item.stock / LOW_STOCK_THRESHOLD) * 100,
-                100,
-              );
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.alertItem,
-                    index === 0 && styles.alertItemFirst,
-                  ]}
-                  onPress={() =>
-                    navigation.navigate('ProductForm', { productId: item.id })
-                  }>
-                  <View style={styles.alertItemRow}>
-                    <Text style={styles.alertItemName} numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                    <Text style={styles.alertItemQty}>
-                      {item.stock} left
-                    </Text>
-                  </View>
-                  <View style={styles.alertBar}>
-                    <View
-                      style={[
-                        styles.alertBarFill,
-                        { width: `${barPercent}%` },
-                      ]}
-                    />
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+            {outOfStockItems.map((item, index) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.alertItem,
+                  index === 0 && styles.alertItemFirst,
+                ]}
+                onPress={() =>
+                  navigation.navigate('ProductForm', { productId: item.id })
+                }>
+                <View style={styles.alertItemRow}>
+                  <Text style={styles.alertItemName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={[styles.alertItemQty, { color: colors.ERROR }]}>
+                    Out of stock
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
       </ScrollView>

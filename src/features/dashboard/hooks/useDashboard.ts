@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react';
 import { getDatabase } from '../../../shared/db/database';
 import { getDashboardData } from '../services/dashboardService';
-import { getLowStockProducts } from '../../products/services/productService';
+import { getOutOfStockProducts } from '../../products/services/productService';
 import { Product } from '../../../shared/types';
 
 const useDashboard = () => {
   const [todaySales, setTodaySales] = useState(0);
   const [todayCount, setTodayCount] = useState(0);
-  const [lowStockItems, setLowStockItems] = useState<Product[]>([]);
+  const [outOfStockItems, setOutOfStockItems] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadDashboard = useCallback(async () => {
@@ -17,8 +17,8 @@ const useDashboard = () => {
       const data = await getDashboardData(db);
       setTodaySales(data.todaySales);
       setTodayCount(data.todayCount);
-      const lowStock = await getLowStockProducts(db, 5);
-      setLowStockItems(lowStock);
+      const outOfStock = await getOutOfStockProducts(db);
+      setOutOfStockItems(outOfStock);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
     } finally {
@@ -29,7 +29,7 @@ const useDashboard = () => {
   return {
     todaySales,
     todayCount,
-    lowStockItems,
+    outOfStockItems,
     isLoading,
     loadDashboard,
   };

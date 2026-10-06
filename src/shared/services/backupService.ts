@@ -3,6 +3,7 @@ import Share from 'react-native-share';
 import { Platform } from 'react-native';
 import SQLite, { SQLiteDatabase } from 'react-native-sqlite-storage';
 import { closeDatabase, getDatabase } from '../db/database';
+import { getSetting, setSetting } from './settingsService';
 import { pickFile } from './filePicker';
 
 const DB_NAME = 'mobilepos.db';
@@ -226,6 +227,61 @@ export const restoreFromBackup = async (backupPath: string): Promise<void> => {
 
 export const deleteBackup = async (backupPath: string): Promise<void> => {
   await RNFS.unlink(backupPath);
+};
+
+const AUTO_BACKUP_PREFIX = 'mobilepos-auto-backup-';
+const MAX_AUTO_BACKUPS = 7;
+
+const cleanOldAutoBackups = async (): Promise<void> => {
+  try {
+    await ensureBackupFolder();
+    const files = await RNFS.readDir(BACKUP_FOLDER);
+    const autoBackups = files
+      .filter(f => f.name.startsWith(AUTO_BACKUP_PREFIX) && f.name.endsWith('.db') && !f.isDirectory())
+      .sort((a, b) => b.name.localeCompare(a.name));
+
+    for (let i = MAX_AUTO_BACKUPS; i < autoBackups.length; i++) {
+      await RNFS.unlink(autoBackups[i].path).catch(() => {});
+    }
+  } catch {}
+};
+
+export const autoBackupIfNeeded = async (): Promise<void> => {
+  try {
+    const db = await getDatabase();
+    const lastAutoBackup = await getSetting(db, 'last_auto_backup_date');
+    const today = new Date().toISOString().slice(0, 10);
+
+    if (lastAutoBackup === today) return;
+
+    const dbPath = getDbPath();
+    const exists = await RNFS.exists(dbPath);
+    if (!exists) return;
+
+    await ensureBackupFolder();
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const backupName = `${AUTO_BACKUP_PREFIX}${timestamp}.db`;
+    const backupPath = `${BACKUP_FOLDER}/${backupName}`;
+    const temporaryPath = `${backupPath}.creating`;
+
+    await closeDatabase();
+    try {
+      await RNFS.copyFile(dbPath, temporaryPath);
+      await RNFS.moveFile(temporaryPath, backupPath);
+    } catch (error) {
+      if (await RNFS.exists(temporaryPath)) await RNFS.unlink(temporaryPath);
+      throw error;
+    } finally {
+      await getDatabase();
+    }
+
+    const db2 = await getDatabase();
+    await setSetting(db2, 'last_auto_backup_date', today);
+    await cleanOldAutoBackups();
+  } catch (error) {
+    console.warn('Auto-backup failed:', error);
+  }
 };
 
 export const restoreFromFilePicker = async (): Promise<void> => {

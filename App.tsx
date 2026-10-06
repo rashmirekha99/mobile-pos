@@ -7,6 +7,7 @@ import { getDatabase } from './src/shared/db/database';
 import { getSetting } from './src/shared/services/settingsService';
 import { connectPrinter, disconnectPrinter, requestPermissions } from './src/shared/services/bluetoothPrinterService';
 import { usePrinterStore } from './src/shared/store/printerStore';
+import { autoBackupIfNeeded } from './src/shared/services/backupService';
 
 const PrinterAutoReconnect = () => {
   const reconnecting = useRef(false);
@@ -57,10 +58,18 @@ const PrinterAutoReconnect = () => {
   return null;
 };
 
+const AutoBackup = () => {
+  useEffect(() => {
+    autoBackupIfNeeded();
+  }, []);
+  return null;
+};
+
 const App = () => {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
+        <AutoBackup />
         <PrinterAutoReconnect />
         <RootStackNavigator />
       </ThemeProvider>

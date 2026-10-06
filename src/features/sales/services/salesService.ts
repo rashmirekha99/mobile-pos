@@ -322,6 +322,27 @@ export const getSalesByDate = async (
   return sales;
 };
 
+export const getSalesByDateRange = async (
+  db: SQLiteDatabase,
+  fromDate: string,
+  toDate: string,
+): Promise<Array<Sale & { item_count: number }>> => {
+  const [results] = await db.executeSql(
+    `SELECT s.*,
+       (SELECT COUNT(*) FROM sale_items WHERE sale_id = s.id) +
+       (SELECT COUNT(*) FROM sale_service_items WHERE sale_id = s.id) as item_count
+     FROM sales s
+     WHERE date(s.created_at) >= ? AND date(s.created_at) <= ?
+     ORDER BY s.created_at DESC`,
+    [fromDate, toDate],
+  );
+  const sales: Array<Sale & { item_count: number }> = [];
+  for (let i = 0; i < results.rows.length; i++) {
+    sales.push(results.rows.item(i));
+  }
+  return sales;
+};
+
 export const getTodaySalesCount = async (
   db: SQLiteDatabase,
 ): Promise<number> => {
