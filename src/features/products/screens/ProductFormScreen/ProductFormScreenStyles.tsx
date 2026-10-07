@@ -322,6 +322,29 @@ const GetProductFormScreenStyles = (colors: ThemeColors) => {
       fontWeight: '700',
       color: '#FFFFFF',
     },
+    returnRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    returnField: {
+      width: 70,
+    },
+    returnFieldReason: {
+      flex: 1,
+    },
+    returnButton: {
+      backgroundColor: colors.ERROR,
+      borderRadius: 14,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      alignItems: 'center',
+    },
+    returnButtonText: {
+      fontSize: fonts.FONT_SIZE_12,
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
     // Supplier modal
     modalOverlay: {
       flex: 1,

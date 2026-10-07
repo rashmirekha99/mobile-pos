@@ -41,6 +41,7 @@ import { Supplier } from '../../../../shared/types';
 import { getDatabase } from '../../../../shared/db/database';
 import { getAllSuppliers } from '../../../suppliers/services/supplierService';
 import { getAllProductCategories, ProductCategory } from '../../services/categoryService';
+import { returnStock } from '../../services/productService';
 import { useSettingsStore } from '../../../../shared/store/settingsStore';
 import { getSetting, setSetting } from '../../../../shared/services/settingsService';
 import { formatCurrency } from '../../../../shared/utils/format';
@@ -94,6 +95,8 @@ const ProductFormScreen = () => {
   const [labelHeightMm, setLabelHeightMm] = useState('20');
   const [labelGapMm, setLabelGapMm] = useState('2');
   const [printCount, setPrintCount] = useState('1');
+  const [returnQty, setReturnQty] = useState('');
+  const [returnReason, setReturnReason] = useState('');
   const { profitMargin, setProfitMargin } = useSettingsStore();
 
   const confirmGoBack = useCallback(() => {
@@ -313,6 +316,43 @@ const ProductFormScreen = () => {
         Alert.alert('Print Error', 'Failed to print to thermal printer');
       }
     }
+  };
+
+  const handleReturnStock = () => {
+    const qty = parseInt(returnQty, 10);
+    if (!qty || qty <= 0) {
+      Alert.alert('Invalid', 'Enter a valid return quantity');
+      return;
+    }
+    const currentStock = parseInt(stock, 10) || 0;
+    if (qty > currentStock) {
+      Alert.alert('Invalid', `Cannot return more than current stock (${currentStock})`);
+      return;
+    }
+    const reason = returnReason.trim() || 'No reason specified';
+    Alert.alert(
+      'Confirm Return',
+      `Return ${qty} unit${qty > 1 ? 's' : ''}?\nReason: ${reason}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Return',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const db = await getDatabase();
+              await returnStock(db, productId!, qty, reason);
+              setStock(String(currentStock - qty));
+              setReturnQty('');
+              setReturnReason('');
+              Alert.alert('Success', `${qty} unit${qty > 1 ? 's' : ''} returned successfully`);
+            } catch (error) {
+              Alert.alert('Error', 'Failed to process return');
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -641,6 +681,40 @@ const ProductFormScreen = () => {
               </View>
             )}
           </View>
+
+          {/* Return Stock - only when editing */}
+          {isEditing && (
+            <View style={[styles.card, styles.cardSecondary]}>
+              <Text style={styles.cardTitle}>Return Stock</Text>
+              <View style={styles.returnRow}>
+                <View style={styles.returnField}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Qty"
+                    placeholderTextColor="#a9acc9"
+                    value={returnQty}
+                    onChangeText={setReturnQty}
+                    keyboardType="number-pad"
+                  />
+                </View>
+                <View style={styles.returnFieldReason}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Reason (e.g. Damaged)"
+                    placeholderTextColor="#a9acc9"
+                    value={returnReason}
+                    onChangeText={setReturnReason}
+                  />
+                </View>
+                <TouchableOpacity
+                  style={styles.returnButton}
+                  onPress={handleReturnStock}
+                  activeOpacity={0.85}>
+                  <Text style={styles.returnButtonText}>Return to Supplier</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
 
           {/* Save button */}
           <TouchableOpacity

@@ -60,7 +60,7 @@ const BarcodeDisplay = ({ value, type, size = 150, label, price, labelSizeMm }: 
   return (
     <View style={[styles.container, labelContainerStyle]}>
       {labelSizeMm && (
-        <Text style={{ color: '#000000', fontSize: 6, lineHeight: 7, marginBottom: 1, textAlign: 'center', fontWeight: '700' }}>
+        <Text numberOfLines={1} style={{ color: '#000000', fontSize: 6, lineHeight: 7, marginBottom: 1, textAlign: 'center', fontWeight: '700' }}>
           NRC Baggage
         </Text>
       )}

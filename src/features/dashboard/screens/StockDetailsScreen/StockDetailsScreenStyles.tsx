@@ -21,7 +21,7 @@ const GetStockDetailsScreenStyles = (colors: ThemeColors) => StyleSheet.create({
     minWidth: 0,
   },
   tableContainer: {
-    minWidth: 1230,
+    minWidth: 1295,
     overflow: 'hidden',
     borderRadius: 12,
     backgroundColor: colors.CARD_BACKGROUND,

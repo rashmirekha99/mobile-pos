@@ -140,6 +140,22 @@ export const getLowStockProducts = async (
   return products;
 };
 
+export const returnStock = async (
+  db: SQLiteDatabase,
+  productId: number,
+  quantity: number,
+  reason: string,
+): Promise<void> => {
+  await db.executeSql(
+    'INSERT INTO stock_returns (product_id, quantity, reason) VALUES (?, ?, ?)',
+    [productId, quantity, reason],
+  );
+  await db.executeSql(
+    'UPDATE products SET stock = stock - ? WHERE id = ?',
+    [quantity, productId],
+  );
+};
+
 export const getOutOfStockProducts = async (
   db: SQLiteDatabase,
 ): Promise<Product[]> => {

@@ -18,20 +18,27 @@ import { Product, Supplier } from '../../../../shared/types';
 import { formatCurrency, formatDate, getTodayDateString } from '../../../../shared/utils/format';
 import { STORE_NAME } from '../../../../configs/Constants';
 
-type StockDetailsItem = Product & { supplier_name: string | null; category_name: string | null };
+type StockDetailsItem = Product & { supplier_name: string | null; category_name: string | null; returned_qty: number };
 
-const getAllProductsWithFullStock = async (db: SQLiteDatabase): Promise<Product[]> => {
+const getAllProductsWithFullStock = async (db: SQLiteDatabase): Promise<(Product & { returned_qty: number })[]> => {
   const [results] = await db.executeSql(
-    `SELECT p.*, p.stock + COALESCE(sold.total_sold, 0) AS stock
+    `SELECT p.*,
+       p.stock + COALESCE(sold.total_sold, 0) AS stock,
+       COALESCE(ret.total_returned, 0) AS returned_qty
      FROM products p
      LEFT JOIN (
        SELECT product_id, SUM(quantity) AS total_sold
        FROM sale_items
        GROUP BY product_id
      ) sold ON sold.product_id = p.id
+     LEFT JOIN (
+       SELECT product_id, SUM(quantity) AS total_returned
+       FROM stock_returns
+       GROUP BY product_id
+     ) ret ON ret.product_id = p.id
      ORDER BY p.created_at DESC`,
   );
-  const products: Product[] = [];
+  const products: (Product & { returned_qty: number })[] = [];
   for (let i = 0; i < results.rows.length; i++) {
     products.push(results.rows.item(i));
   }
@@ -269,6 +276,7 @@ const StockDetailsScreen = () => {
         <td class="number">${formatCurrency(item.buying_price)}</td>
         <td class="number">${formatCurrency(item.price)}</td>
         <td class="qty">${item.stock}</td>
+        <td class="qty" style="${item.returned_qty > 0 ? 'color:#e5484d; font-weight:600;' : ''}">${item.returned_qty || '-'}</td>
         <td class="number">${formatCurrency(item.buying_price * item.stock)}</td>
         <td class="number">${formatCurrency(item.price * item.stock)}</td>
       </tr>`).join('');
@@ -301,12 +309,15 @@ const StockDetailsScreen = () => {
             <th style="text-align:right;">Buying Price</th>
             <th style="text-align:right;">Selling Price</th>
             <th style="text-align:center;">Qty</th>
+            <th style="text-align:center;">Returned</th>
             <th style="text-align:right;">Cost (B×Q)</th>
             <th style="text-align:right;">Value (S×Q)</th>
           </tr></thead>
-          <tbody>${rows || '<tr><td colspan="10" style="text-align:center; padding:16px;">No products found</td></tr>'}</tbody>
+          <tbody>${rows || '<tr><td colspan="11" style="text-align:center; padding:16px;">No products found</td></tr>'}</tbody>
           ${rows ? `<tfoot><tr style="background:#f0f0f0; font-weight:bold; border-top:2px solid #333;">
-            <td colspan="8" style="padding:8px 6px; text-align:right;">Total:</td>
+            <td colspan="7" style="padding:8px 6px; text-align:right;">Total:</td>
+            <td class="qty" style="padding:8px 6px; border-top:2px solid #333;">${filteredItems.reduce((sum, item) => sum + item.stock, 0)}</td>
+            <td class="qty" style="padding:8px 6px; border-top:2px solid #333;">${filteredItems.reduce((sum, item) => sum + item.returned_qty, 0)}</td>
             <td class="number" style="padding:8px 6px; border-top:2px solid #333;">${formatCurrency(totalStockCost)}</td>
             <td class="number" style="padding:8px 6px; border-top:2px solid #333;">${formatCurrency(totalStockValue)}</td>
           </tr></tfoot>` : ''}
@@ -421,6 +432,7 @@ const StockDetailsScreen = () => {
                     <Text style={[styles.headerCell, styles.priceColumn]}>Buying Price</Text>
                     <Text style={[styles.headerCell, styles.priceColumn]}>Selling Price</Text>
                     <Text style={[styles.headerCell, styles.qtyColumn]}>Qty</Text>
+                    <Text style={[styles.headerCell, styles.qtyColumn]}>Returned</Text>
                     <Text style={[styles.headerCell, styles.costColumn]}>Cost (B×Q)</Text>
                     <Text style={[styles.headerCell, styles.costColumn]}>Value (S×Q)</Text>
                   </View>
@@ -434,12 +446,15 @@ const StockDetailsScreen = () => {
                       <Text style={[styles.cell, styles.priceColumn]} numberOfLines={1}>{formatCurrency(item.buying_price)}</Text>
                       <Text style={[styles.cell, styles.priceColumn]} numberOfLines={1}>{formatCurrency(item.price)}</Text>
                       <Text style={[styles.cell, styles.qtyColumn]}>{item.stock}</Text>
+                      <Text style={[styles.cell, styles.qtyColumn, item.returned_qty > 0 && { color: '#e5484d', fontWeight: '600' }]}>{item.returned_qty || '-'}</Text>
                       <Text style={[styles.cell, styles.costColumn]} numberOfLines={1}>{formatCurrency(item.buying_price * item.stock)}</Text>
                       <Text style={[styles.cell, styles.costColumn]} numberOfLines={1}>{formatCurrency(item.price * item.stock)}</Text>
                     </View>
                   ))}
                   <View style={styles.totalRow}>
                     <Text style={[styles.totalCell, { flex: 1, textAlign: 'right', paddingRight: 10 }]}>Total:</Text>
+                    <Text style={[styles.totalCell, styles.qtyColumn]}>{filteredItems.reduce((sum, item) => sum + item.stock, 0)}</Text>
+                    <Text style={[styles.totalCell, styles.qtyColumn]}>{filteredItems.reduce((sum, item) => sum + item.returned_qty, 0)}</Text>
                     <Text style={[styles.totalCell, styles.costColumn]}>{formatCurrency(filteredItems.reduce((sum, item) => sum + item.buying_price * item.stock, 0))}</Text>
                     <Text style={[styles.totalCell, styles.costColumn]}>{formatCurrency(filteredItems.reduce((sum, item) => sum + item.price * item.stock, 0))}</Text>
                   </View>

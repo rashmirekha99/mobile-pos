@@ -178,6 +178,18 @@ export const getDatabase = async (): Promise<SQLiteDatabase> => {
     );
   `);
 
+  // Migration: stock_returns table (track products returned to suppliers)
+  await dbInstance.executeSql(`
+    CREATE TABLE IF NOT EXISTS stock_returns (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      product_id  INTEGER NOT NULL,
+      quantity    INTEGER NOT NULL,
+      reason      TEXT,
+      created_at  TEXT DEFAULT (datetime('now','localtime')),
+      FOREIGN KEY (product_id) REFERENCES products(id)
+    );
+  `);
+
   return dbInstance;
 };
 
